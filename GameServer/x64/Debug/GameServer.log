@@ -1,2 +1,7 @@
 ﻿  Source.cpp
-  GameServer.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\Platilla_3Projects\Platilla_3Projects\x64\Debug\GameServer.exe
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(71): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(81): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(205): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(238): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(241): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  GameServer.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameServer.exe

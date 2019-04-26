@@ -8,6 +8,7 @@ ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigne
 	alias = _alias;
 	ip = _ip;
 	port = _port;
+	numPings = 0;
 }
 
 

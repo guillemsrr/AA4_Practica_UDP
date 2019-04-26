@@ -12,5 +12,6 @@ public:
 	//sf::Vector2 pos;
 	sf::IpAddress ip;
 	unsigned short port;
+	int numPings;
 };
 

@@ -1,14 +1,1 @@
-﻿  PlayerInfo.cpp
-  Tablero.cpp
-g:\guillem\documents\__enti\xarxes2_folder\platilla_3projects\platilla_3projects\gamelib\tablero.cpp(99): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-g:\guillem\documents\__enti\xarxes2_folder\platilla_3projects\platilla_3projects\gamelib\tablero.cpp(108): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-  Generating Code...
-  GameLib.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\Platilla_3Projects\Platilla_3Projects\x64\Debug\GameLib.lib
+﻿  GameLib.vcxproj -> C:\Users\adria\Desktop\AA4_Practica_UDP\x64\Debug\GameLib.lib

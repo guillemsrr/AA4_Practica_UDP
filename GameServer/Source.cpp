@@ -13,7 +13,7 @@
 
 sf::UdpSocket sock;
 std::map<int, ClientProxy*> clientProxies;
-std::map<int, sf::Packet> criticPackets;
+std::map<int, CriticPack*> criticPackets;
 
 //declarations:
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
@@ -68,14 +68,17 @@ void DisconnectionCheckerThreadFunction()
 					//Añadir el paquete a la lista de críticos
 					pack << static_cast<int>(Protocol::DISCONNECTED);
 					pack << criticPackets.size();
-					pack << it->second->id;
-					criticPackets[criticPackets.size()] = pack;					
+					pack << it->second->id;				
 
 					//Enviar DISCONNECTED
 					for (std::map<int, ClientProxy*>::iterator it2 = clientProxies.begin(); it2 != clientProxies.end(); ++it2)
 					{
 						if (it2 != it)
 						{
+
+							CriticPack* cp = new CriticPack(criticPackets.size(), pack, it2->second->ip, it2->second->port);
+							criticPackets[criticPackets.size()] = cp;
+
 							sock.send(pack, it2->second->ip, it2->second->port);
 						}
 					}
@@ -87,6 +90,27 @@ void DisconnectionCheckerThreadFunction()
 					++it;
 				}
 			}
+			clock.restart();
+		}
+	}
+}
+
+void CriticPacketsManagerThreadFunction()
+{
+
+	sf::Clock clock;
+
+	while (true)
+	{
+		sf::Time t1 = clock.getElapsedTime();
+
+		if (t1.asSeconds() > 10.0f)
+		{
+			for (std::map<int, CriticPack*>::iterator it = criticPackets.begin(); it != criticPackets.end(); ++it)
+			{
+				sock.send(it->second->pack, it->second->ip, it->second->port);
+			}
+
 			clock.restart();
 		}
 	}
@@ -108,6 +132,11 @@ int main()
 
 	//Crear thread para comprobar desconexiones
 	std::thread disconnectionCheckerThread(&DisconnectionCheckerThreadFunction);
+	disconnectionCheckerThread.detach();
+
+	//Crear thread para administrar paquetes críticos
+	std::thread criticPacketsManagerThread(&CriticPacketsManagerThreadFunction);
+	criticPacketsManagerThread.detach();
 
 
 	while (true)
@@ -130,6 +159,9 @@ int main()
 			break;
 		case ACK:
 			std::cout << "ACK received" << std::endl;
+			int auxIdPack;
+			pack >> auxIdPack;
+			criticPackets.erase(criticPackets.find(auxIdPack));
 			break;
 		case PONG:
 			int pId;

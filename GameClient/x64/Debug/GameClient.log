@@ -1,4 +1,1 @@
-﻿  Source.cpp
-c:\users\adria\desktop\aa4_practica_udp\gameclient\source.cpp(118): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-c:\users\adria\desktop\aa4_practica_udp\gameclient\source.cpp(127): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-  GameClient.vcxproj -> C:\Users\adria\Desktop\AA4_Practica_UDP\x64\Debug\GameClient.exe
+﻿  GameClient.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameClient.exe

@@ -18,6 +18,7 @@ float criticPacketsTimer = 10.0f;
 
 //declarations:
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
+void MovementControl(sf::Packet pack);
 
 void PingThreadFunction()
 {
@@ -170,8 +171,9 @@ int main()
 			pack >> pId;
 			clientProxies[pId]->numPings = 0;
 			break;
-		case CMD:
-			std::cout << "CMD received" << std::endl;
+		case MOVE:
+			//std::cout << "MOVE received" << std::endl;
+			MovementControl(pack);
 			break;
 		}
 	}
@@ -245,4 +247,30 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 
 	//afegim el nou client en el map
 	clientProxies[id] = newClient;
+}
+
+void MovementControl(sf::Packet pack)
+{
+	int idPlayer;
+	int idMove;
+	pack >> idPlayer>>idMove;
+	sf::Vector2f pos;
+	pack >> pos.x >> pos.y;
+
+	//controlar la posició
+	//marges de la pantalla?
+
+	clientProxies[idPlayer]->pos += pos;
+
+	//ho enviem a tots els players
+	pack.clear();
+	pack << static_cast<int>(Protocol::MOVE);
+	pack << idPlayer;
+	pack << idMove;
+	pack << clientProxies[idPlayer]->pos.x;
+	pack << clientProxies[idPlayer]->pos.y;
+	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+	{
+		sock.send(pack, it->second->ip, it->second->port);
+	}
 }

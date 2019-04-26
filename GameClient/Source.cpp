@@ -14,16 +14,18 @@ sf::UdpSocket sock;
 bool received = false;
 
 PlayerInfo playerSelf;
-std::vector<PlayerInfo*> otherPlayers;
+std::vector<PlayerInfo*> otherPlayers;//seria millor un map
+sf::Vector2f accumMove;
+Board board;
 
 //timers:
 float helloSendingTimer = 2.f;
+float movementTimer = 0.1f;
 
 //declarations:
 void HelloSending();
-void AcumControl();
-void Commands();
 void GraphicsInterface();
+void AccumControl();
 void SendAcknowledge(int idPack);
 
 
@@ -36,10 +38,7 @@ int main()
 	std::thread graphicsInterface(&GraphicsInterface);
 	graphicsInterface.detach();
 
-	std::thread commandsThread(&Commands);
-	commandsThread.detach();
-
-	std::thread acumControlThread(&AcumControl);
+	std::thread acumControlThread(&AccumControl);
 	acumControlThread.detach();
 
 
@@ -126,6 +125,27 @@ int main()
 					SendAcknowledge(idPack);
 				}
 					break;
+				case MOVE:
+				{
+					//std::cout << "MOVE" << std::endl;
+					int idPlayer;
+					int idMove;
+					pack >> idPlayer >> idMove;
+					if (playerSelf.id == idPlayer)
+					{
+						//std::cout << "idPlayer" << std::endl;
+						pack >> playerSelf.pos.x;
+						pack >> playerSelf.pos.y;
+						board.UpdatePlayerPosition(0, playerSelf.pos);
+						accumMove = sf::Vector2f(0,0);
+						//accumMove = play;
+					}
+					else
+					{
+						// amb un map aniríem directament al idPlayer que volem
+					}
+				}
+					break;
 				}
 			}
 		}
@@ -168,24 +188,61 @@ void GraphicsInterface()
 	}
 
 	//crear el taulell amb les coordenades que ara ja tenim
-	Board board;
 	board.InitializePlayerPosition(playerSelf.pos);
+
+	accumMove = sf::Vector2f(0,0);
 
 	for(int i = 0; i<otherPlayers.size(); i++)
 	{
 		board.InitializePlayerPosition(otherPlayers[i]->pos);
 	}
 
-	board.DibujaSFML();
+	board.window.create(sf::VideoMode(SCREEN_PROVISIONAL, SCREEN_PROVISIONAL), "Ejemplo tablero");
+	while (board.window.isOpen())
+	{
+		board.DibujaSFML();
+		board.Commands();
+		accumMove += board.playerMovement;
+	}
+	
 }
 
-void Commands()
-{
 
-}
-
-void AcumControl()
+void AccumControl()
 {
+	while (!received)
+	{
+		//just don't start
+	}
+
+	sf::Clock clock;
+	sf::Packet pack;
+	sf::Vector2f lastPos = playerSelf.pos;
+
+	while (true)
+	{
+		sf::Time t1 = clock.getElapsedTime();
+		if (t1.asSeconds() > movementTimer)
+		{
+			if (true)//accumMove.x != 0 && accumMove.y != 0)
+			{
+				pack.clear();
+				pack << static_cast<int>(Protocol::MOVE);
+				pack << playerSelf.id;
+				pack << accumMove.x << accumMove.y;
+				if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
+				{
+					std::cout << "Error sending the packet" << std::endl;
+				}
+				else
+				{
+					//std::cout << "moving" << std::endl;
+				}
+			}
+			
+			clock.restart();
+		}
+	}
 
 }
 

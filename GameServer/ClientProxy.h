@@ -10,7 +10,7 @@ public:
 
 	int id;
 	std::string alias;
-	sf::Vector2i pos;
+	sf::Vector2f pos;
 	sf::IpAddress ip;
 	unsigned short port;
 	int numPings;

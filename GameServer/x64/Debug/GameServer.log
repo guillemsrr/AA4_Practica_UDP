@@ -1,7 +1,19 @@
-﻿  Source.cpp
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(71): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(81): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(205): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(238): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(241): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+﻿  ClientProxy.cpp
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ClientProxy.cpp(9): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ClientProxy.cpp(10): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+  Source.cpp
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(72): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(82): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(207): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(240): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(243): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
   GameServer.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameServer.exe

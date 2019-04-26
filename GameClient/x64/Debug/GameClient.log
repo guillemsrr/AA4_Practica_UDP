@@ -1,10 +1,10 @@
 ﻿  Board.cpp
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\Board.cpp(56): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\Board.cpp(53): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\Board.cpp(65): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\Board.cpp(62): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float

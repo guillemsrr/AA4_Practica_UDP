@@ -18,10 +18,14 @@ public:
 	void InitializePlayerPosition(sf::Vector2f playerPos);
 	void UpdatePlayerPosition(int playerNum, sf::Vector2f pos);
 	void DibujaSFML();
+	void Commands();
+	sf::RenderWindow window;
+	sf::Vector2f playerMovement;
+	std::vector<sf::Vector2f> playerPositions;//number 0 is the player, the rest are enemies
 
 private:
 	sf::Vector2f BoardToWindows(sf::Vector2f _position);
-	std::vector<sf::Vector2f> playerPositions;//number 0 is the player, the rest are enemies
 
+	float pixelMove = 5.f;
 };
 

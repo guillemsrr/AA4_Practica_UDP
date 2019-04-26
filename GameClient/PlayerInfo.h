@@ -11,6 +11,6 @@ public:
 
 	int id;
 	std::string alias;
-	sf::Vector2i pos;
+	sf::Vector2f pos;
 };
 

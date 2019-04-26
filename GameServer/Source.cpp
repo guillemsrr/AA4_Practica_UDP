@@ -14,6 +14,7 @@
 sf::UdpSocket sock;
 std::map<int, ClientProxy*> clientProxies;
 std::map<int, CriticPack*> criticPackets;
+float criticPacketsTimer = 10.0f;
 
 //declarations:
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
@@ -59,7 +60,7 @@ void DisconnectionCheckerThreadFunction()
 		sf::Time t1 = clock.getElapsedTime();
 		if (t1.asSeconds() > 10.0f)
 		{
-			std::cout << "Checking for disconnected players" << std::endl;
+			//std::cout << "Checking for disconnected players" << std::endl;
 			//Comprobar si el numPings supera el límite y enviar el DISCONNECTED a todos los demás clientes
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); /*++it*/)
 			{
@@ -67,7 +68,8 @@ void DisconnectionCheckerThreadFunction()
 				{
 					//Añadir el paquete a la lista de críticos
 					pack << static_cast<int>(Protocol::DISCONNECTED);
-					pack << criticPackets.size();
+					int idPack = criticPackets.size();
+					pack << idPack;
 					pack << it->second->id;				
 
 					//Enviar DISCONNECTED
@@ -77,7 +79,7 @@ void DisconnectionCheckerThreadFunction()
 						{
 
 							CriticPack* cp = new CriticPack(criticPackets.size(), pack, it2->second->ip, it2->second->port);
-							criticPackets[criticPackets.size()] = cp;
+							criticPackets[idPack] = cp;
 
 							sock.send(pack, it2->second->ip, it2->second->port);
 						}
@@ -97,14 +99,13 @@ void DisconnectionCheckerThreadFunction()
 
 void CriticPacketsManagerThreadFunction()
 {
-
 	sf::Clock clock;
 
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
 
-		if (t1.asSeconds() > 10.0f)
+		if (t1.asSeconds() > criticPacketsTimer)
 		{
 			for (std::map<int, CriticPack*>::iterator it = criticPackets.begin(); it != criticPackets.end(); ++it)
 			{
@@ -146,29 +147,31 @@ int main()
 		unsigned short port;
 		if (sock.receive(pack, ip, port) != sf::Socket::Status::Done)
 		{
-			//std::cout << "Error on receiving packet ip:" << ip.toString() << std::endl;
+			std::cout << "Error on receiving packet ip:" << ip.toString() << std::endl;
 		}
 
-		std::cout << "Packet received" << std::endl;
 		int num;
 		pack >> num;
 		switch (static_cast<Protocol>(num))
 		{
 		case HELLO:
+			std::cout << "HELLO received" << std::endl;
 			NewPlayer(ip, port, pack);
 			break;
 		case ACK:
+			std::cout << "ACK received" << std::endl;
 			int auxIdPack;
 			pack >> auxIdPack;
 			criticPackets.erase(criticPackets.find(auxIdPack));
 			break;
 		case PONG:
+			//std::cout << "PONG received" << std::endl;
 			int pId;
 			pack >> pId;
 			clientProxies[pId]->numPings = 0;
 			break;
 		case CMD:
-
+			std::cout << "CMD received" << std::endl;
 			break;
 		}
 	}
@@ -181,13 +184,13 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	std::string alias;
 	pack >> alias;
 
-	//busquem per ip i port:
+	//busquem per ip i port si el client ja existeix:
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
 		ClientProxy* client = it->second;
-		if (client->ip == ip && client->port == port)//ya lo tenemos
+		if (client->ip == ip && client->port == port)
 		{
-			std::cout << "Client exists" << std::endl;
+			std::cout << "Client already exists" << std::endl;
 			pack.clear();
 			pack << static_cast<int>(Protocol::WELCOME);
 			pack << client->id;
@@ -200,8 +203,8 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 
 	//és un nou player
 	int id = clientProxies.size();
-	int x = clientProxies.size() * 5;
-	int y = 50;
+	int x = id % SIZE_FILA_TABLERO;
+	int y = id % SIZE_FILA_TABLERO;
 	ClientProxy* newClient = new ClientProxy(id, alias, x, y, ip, port);
 	pack.clear();
 	pack << static_cast<int>(Protocol::WELCOME);
@@ -209,6 +212,7 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	pack << x;
 	pack << y;
 	pack << static_cast<int>(clientProxies.size());
+
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
 		if (it->second->id != id)
@@ -218,28 +222,27 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 			pack << it->second->pos.x;
 			pack << it->second->pos.y;
 		}
-
 	}
 	sock.send(pack, ip, port);
 
+	//Enviar NEW_PLAYER a todos los demás clientes
+	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+	{
+		//com que cada vegada hem d'anar posant un id del packet diferent, anem tornant a implir el packet
+		pack.clear();
+		pack << static_cast<int>(Protocol::NEW_PLAYER);
+		pack << id;
+		pack << alias;
+		pack << x;
+		pack << y;
+		int idPack = criticPackets.size();
+		pack << idPack;
+
+		CriticPack* cp = new CriticPack(criticPackets.size(), pack, it->second->ip, it->second->port);
+		criticPackets[idPack] = cp;
+		sock.send(pack, it->second->ip, it->second->port);
+	}
+
+	//afegim el nou client en el map
 	clientProxies[id] = newClient;
-
-	//Enviar NEW PLAYER a todos los demás clientes
-	//for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
-	//{
-	//	if (it->second->alias != alias)
-	//	{
-	//		//Enviar NEW PLAYER a todos
-	//		for (std::map<int, ClientProxy*>::iterator it2 = clientProxies.begin(); it2 != clientProxies.end(); ++it2)
-	//		{
-	//			pack.cle
-	//			sock.send();
-	//		}
-
-	//		//Añadir paquete a críticos
-
-
-	//	}
-	//}
-
 }

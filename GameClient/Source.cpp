@@ -1,7 +1,8 @@
 #pragma once
+#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML\Network.hpp>
-#include <Tablero.h>
+#include "Board.h"
 #include <Constants.h>
 #include <thread>
 #include "PlayerInfo.h"
@@ -15,9 +16,33 @@ bool received = false;
 PlayerInfo playerSelf;
 std::vector<PlayerInfo*> otherPlayers;
 
+//timers:
+float helloSendingTimer = 2.f;
 
-void Receive_Thread()
+//declarations:
+void HelloSending();
+void AcumControl();
+void Commands();
+void GraphicsInterface();
+void SendAcknowledge(int idPack);
+
+
+int main()
 {
+	//Enviamos HELLO al servidor
+	std::thread helloThread(&HelloSending);
+	helloThread.detach();
+
+	std::thread graphicsInterface(&GraphicsInterface);
+	graphicsInterface.detach();
+
+	std::thread commandsThread(&Commands);
+	commandsThread.detach();
+
+	std::thread acumControlThread(&AcumControl);
+	acumControlThread.detach();
+
+
 	while (true)
 	{
 		sf::Packet pack;
@@ -29,7 +54,7 @@ void Receive_Thread()
 		}
 		else
 		{
-			std::cout << "Packet received" << std::endl;
+			//std::cout << "Packet received" << std::endl;
 
 			if (ip == IP && port == PORT)//ES EL SERVER
 			{
@@ -38,8 +63,8 @@ void Receive_Thread()
 				switch (static_cast<Protocol>(num))
 				{
 				case WELCOME:
+				{
 					std::cout << "WELCOME received" << std::endl;
-					received = true;
 					pack >> playerSelf.id;
 					pack >> playerSelf.pos.x;
 					pack >> playerSelf.pos.y;
@@ -61,156 +86,113 @@ void Receive_Thread()
 								alreadyExists = true;
 							}
 						}
-						if(!alreadyExists)
+						if (!alreadyExists)
 							otherPlayers.push_back(p);
 					}
+					received = true;
+				}
 					break;
-				case NEWPLAYER:
+				case NEW_PLAYER:
+				{
+					PlayerInfo* p = new PlayerInfo();
+					pack >> p->id;
+					pack >> p->alias;
+					pack >> p->pos.x;
+					pack >> p->pos.y;
+					otherPlayers.push_back(p);
 
+					int idPack;
+					pack >> idPack;
+					SendAcknowledge(idPack);
+				}
 					break;
 				case PING:
-					std::cout << "PING received" << std::endl;
+				{
+					//std::cout << "PING received" << std::endl;
 					pack.clear();
 					pack << static_cast<int>(Protocol::PONG);
 					pack << playerSelf.id;
 					sock.send(pack, IP, PORT);
+				}
 					break;
 				case DISCONNECTED:
+				{
 					std::cout << "DISCONNECTED received" << std::endl;
-					int auxIdPack;
-					int auxIdPlayer;
-					pack >> auxIdPack >> auxIdPlayer;
-					pack.clear();
-					pack << static_cast<int>(Protocol::ACK);
-					pack << auxIdPack;
-					sock.send(pack, IP, PORT);
+					int idPack;
+					int idPlayer;
+					pack >> idPack >> idPlayer;
+					//PLAYER IDPLAYER DISCONNECTED
+
+					SendAcknowledge(idPack);
+				}
 					break;
 				}
 			}
 		}
-
-		
-	}
-}
-
-sf::Vector2f BoardToWindows(sf::Vector2f _position)
-{
-	return sf::Vector2f(_position.x*LADO_CASILLA + OFFSET_AVATAR, _position.y*LADO_CASILLA + OFFSET_AVATAR);
-}
-
-void DibujaSFML()
-{
-	sf::Vector2f casillaOrigen, casillaDestino;
-	bool casillaMarcada = false;
-
-	sf::RenderWindow window(sf::VideoMode(512, 512), "Ejemplo tablero");
-	while (window.isOpen())
-	{
-		sf::Event event;
-
-		//Este primer WHILE es para controlar los eventos del mouse
-		while (window.pollEvent(event))
-		{
-			switch (event.type)
-			{
-			case sf::Event::Closed:
-				window.close();
-				break;
-
-			default:
-				break;
-
-			}
-		}
-
-		window.clear();
-
-		//A partir de aquí es para pintar por pantalla
-		//Este FOR es para el tablero
-		for (int i = 0; i<8; i++)
-		{
-			for (int j = 0; j<8; j++)
-			{
-				sf::RectangleShape rectBlanco(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
-				rectBlanco.setFillColor(sf::Color::White);
-				if (i % 2 == 0)
-				{
-					//Empieza por el blanco
-					if (j % 2 == 0)
-					{
-						rectBlanco.setPosition(sf::Vector2f(i*LADO_CASILLA, j*LADO_CASILLA));
-						window.draw(rectBlanco);
-					}
-				}
-				else
-				{
-					//Empieza por el negro
-					if (j % 2 == 1)
-					{
-						rectBlanco.setPosition(sf::Vector2f(i*LADO_CASILLA, j*LADO_CASILLA));
-						window.draw(rectBlanco);
-					}
-				}
-			}
-		}
-
-		//Para pintar el un circulito
-		sf::CircleShape shape(RADIO_AVATAR);
-		shape.setFillColor(sf::Color::Blue);
-		sf::Vector2f posicion_bolita(4.f, 7.f);
-		posicion_bolita = BoardToWindows(posicion_bolita);
-		shape.setPosition(posicion_bolita);
-		window.draw(shape);
-
-
-
-
-		window.display();
 	}
 
+	return 0;
 }
 
-
-
-int main()
+void HelloSending()
 {
-	//Enviamos HELLO al servidor
+	sf::Clock clock;
 	sf::Packet pack;
 	std::string alias = "Guillem";
 	pack << static_cast<int>(Protocol::HELLO);
 	pack << alias;
-	float timer = 0;
-
-	std::thread receiver(&Receive_Thread);
-	receiver.detach();
-
-	sf::Clock clock;
 
 	while (!received)
 	{
-		
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > 2.0f)
+		if (t1.asSeconds() > helloSendingTimer)
 		{
-			std::cout << "Entro" << std::endl;
 			if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
 			{
 				std::cout << "Error sending the packet" << std::endl;
 			}
 			else
 			{
-				std::cout << "Paquete enviado" << std::endl;
+				std::cout << "HELLO enviado" << std::endl;
 			}
 			clock.restart();
 		}
-			
-
 	}
-
-	
-	DibujaSFML();
-	return 0;
 }
 
+void GraphicsInterface()
+{
+	while (!received)
+	{
+		//just don't start
+	}
 
+	//crear el taulell amb les coordenades que ara ja tenim
+	Board board;
+	board.InitializePlayerPosition(playerSelf.pos);
 
+	for(int i = 0; i<otherPlayers.size(); i++)
+	{
+		board.InitializePlayerPosition(otherPlayers[i]->pos);
+	}
+
+	board.DibujaSFML();
+}
+
+void Commands()
+{
+
+}
+
+void AcumControl()
+{
+
+}
+
+void SendAcknowledge(int idPack)
+{
+	sf::Packet pack;
+	pack << idPack;
+	pack << static_cast<int>(Protocol::ACK);
+	sock.send(pack, IP, PORT);
+}

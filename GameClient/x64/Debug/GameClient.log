@@ -1,12 +1,12 @@
-﻿  Source.cpp
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\source.cpp(141): warning C4244: 'argumento': conversión de 'int' a 'T'; posible pérdida de datos
+﻿  Board.cpp
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\Board.cpp(56): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\source.cpp(150): warning C4244: 'argumento': conversión de 'int' a 'T'; posible pérdida de datos
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\Board.cpp(65): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
-  GameClient.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameClient.exe
+  GameClient.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameClient.exe

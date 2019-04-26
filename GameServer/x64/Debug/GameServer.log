@@ -1,6 +1,7 @@
 ﻿  Source.cpp
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(79): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(80): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(202): warning C4267: 'inicializando': conversión de 'size_t' a 'int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(203): warning C4267: 'inicializando': conversión de 'size_t' a 'int'; posible pérdida de datos
-  GameServer.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameServer.exe
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(71): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(81): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(205): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(238): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(241): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  GameServer.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameServer.exe

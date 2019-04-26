@@ -13,7 +13,7 @@ sf::UdpSocket sock;
 bool received = false;
 
 PlayerInfo playerSelf;
-
+std::vector<PlayerInfo*> otherPlayers;
 
 
 void Receive_Thread()
@@ -41,9 +41,32 @@ void Receive_Thread()
 					std::cout << "WELCOME received" << std::endl;
 					received = true;
 					pack >> playerSelf.id;
+					pack >> playerSelf.pos.x;
+					pack >> playerSelf.pos.y;
+					int sizeOthers;
+					pack >> sizeOthers;
+					for (int i = 0; i < sizeOthers; i++)
+					{
+						PlayerInfo* p = new PlayerInfo();
+						pack >> p->id;
+						pack >> p->alias;
+						pack >> p->pos.x;
+						pack >> p->pos.y;
 
+						bool alreadyExists = false;
+						for (int j = 0; j < otherPlayers.size(); j++)
+						{
+							if (otherPlayers[j]->id == p->id)
+							{
+								alreadyExists = true;
+							}
+						}
+						if(!alreadyExists)
+							otherPlayers.push_back(p);
+					}
 					break;
 				case NEWPLAYER:
+
 					break;
 				case PING:
 					std::cout << "PING received" << std::endl;

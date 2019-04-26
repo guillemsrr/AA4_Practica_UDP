@@ -1,8 +1,6 @@
-﻿  ClientProxy.cpp
-  CriticPack.cpp
-  Source.cpp
+﻿  Source.cpp
 c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(79): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
 c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(80): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(201): warning C4267: 'inicializando': conversión de 'size_t' a 'int'; posible pérdida de datos
-  Generando código...
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(202): warning C4267: 'inicializando': conversión de 'size_t' a 'int'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\source.cpp(203): warning C4267: 'inicializando': conversión de 'size_t' a 'int'; posible pérdida de datos
   GameServer.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameServer.exe

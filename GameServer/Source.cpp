@@ -158,7 +158,6 @@ int main()
 			NewPlayer(ip, port, pack);
 			break;
 		case ACK:
-			std::cout << "ACK received" << std::endl;
 			int auxIdPack;
 			pack >> auxIdPack;
 			criticPackets.erase(criticPackets.find(auxIdPack));
@@ -192,6 +191,8 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 			pack.clear();
 			pack << static_cast<int>(Protocol::WELCOME);
 			pack << client->id;
+			pack << client->pos.x;
+			pack << client->pos.y;
 			sock.send(pack, ip, port);
 			return;
 		}
@@ -199,11 +200,46 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 
 	//és un nou player
 	int id = clientProxies.size();
-	ClientProxy* newClient = new ClientProxy(id, alias, ip, port);
-	clientProxies[id] = newClient;
+	int x = clientProxies.size() * 5;
+	int y = 50;
+	ClientProxy* newClient = new ClientProxy(id, alias, x, y, ip, port);
 	pack.clear();
 	pack << static_cast<int>(Protocol::WELCOME);
-	pack << clientProxies[id]->id;
+	pack << id;
+	pack << x;
+	pack << y;
+	pack << static_cast<int>(clientProxies.size());
+	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+	{
+		if (it->second->id != id)
+		{
+			pack << it->second->id;
+			pack << it->second->alias;
+			pack << it->second->pos.x;
+			pack << it->second->pos.y;
+		}
+
+	}
 	sock.send(pack, ip, port);
+
+	clientProxies[id] = newClient;
+
+	//Enviar NEW PLAYER a todos los demás clientes
+	//for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+	//{
+	//	if (it->second->alias != alias)
+	//	{
+	//		//Enviar NEW PLAYER a todos
+	//		for (std::map<int, ClientProxy*>::iterator it2 = clientProxies.begin(); it2 != clientProxies.end(); ++it2)
+	//		{
+	//			pack.cle
+	//			sock.send();
+	//		}
+
+	//		//Añadir paquete a críticos
+
+
+	//	}
+	//}
 
 }

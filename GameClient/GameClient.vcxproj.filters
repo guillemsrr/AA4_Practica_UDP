@@ -18,18 +18,18 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerInfo.cpp">
+    <ClCompile Include="Board.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Board.cpp">
+    <ClCompile Include="Slither.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PlayerInfo.h">
+    <ClInclude Include="Board.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Board.h">
+    <ClInclude Include="Slither.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

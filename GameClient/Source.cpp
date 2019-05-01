@@ -5,7 +5,7 @@
 #include "Board.h"
 #include <Constants.h>
 #include <thread>
-#include "PlayerInfo.h"
+#include <PlayerInfo.h>
 
 //---------CLIENTE---------//
 
@@ -13,8 +13,8 @@
 sf::UdpSocket sock;
 bool received = false;
 
-PlayerInfo playerSelf;
-std::vector<PlayerInfo*> otherPlayers;//seria millor un map
+PlayerInfo* m_playerInfo;
+std::map<int, PlayerInfo*> playersMap;//seria millor un map
 sf::Vector2f accumMove;
 Board board;
 
@@ -64,9 +64,17 @@ int main()
 				case WELCOME:
 				{
 					std::cout << "WELCOME received" << std::endl;
-					pack >> playerSelf.id;
-					pack >> playerSelf.pos.x;
-					pack >> playerSelf.pos.y;
+
+					//create the player:
+					PlayerInfo* p = new PlayerInfo();
+					pack >> p->id;
+					pack >> p->alias;
+					pack >> p->pos.x;
+					pack >> p->pos.y;
+					m_playerInfo = p;
+					playersMap[p->id] = p;
+
+					//create the others:
 					int sizeOthers;
 					pack >> sizeOthers;
 					for (int i = 0; i < sizeOthers; i++)
@@ -77,16 +85,10 @@ int main()
 						pack >> p->pos.x;
 						pack >> p->pos.y;
 
-						bool alreadyExists = false;
-						for (int j = 0; j < otherPlayers.size(); j++)
+						if (playersMap.count(p->id) == 0)
 						{
-							if (otherPlayers[j]->id == p->id)
-							{
-								alreadyExists = true;
-							}
+							playersMap[p->id] = p;
 						}
-						if (!alreadyExists)
-							otherPlayers.push_back(p);
 					}
 					received = true;
 				}
@@ -98,7 +100,7 @@ int main()
 					pack >> p->alias;
 					pack >> p->pos.x;
 					pack >> p->pos.y;
-					otherPlayers.push_back(p);
+					playersMap[p->id] = p;
 
 					int idPack;
 					pack >> idPack;
@@ -110,7 +112,7 @@ int main()
 					//std::cout << "PING received" << std::endl;
 					pack.clear();
 					pack << static_cast<int>(Protocol::PONG);
-					pack << playerSelf.id;
+					pack << m_playerInfo->id;
 					sock.send(pack, IP, PORT);
 				}
 					break;
@@ -131,19 +133,10 @@ int main()
 					int idPlayer;
 					int idMove;
 					pack >> idPlayer >> idMove;
-					if (playerSelf.id == idPlayer)
-					{
-						//std::cout << "idPlayer" << std::endl;
-						pack >> playerSelf.pos.x;
-						pack >> playerSelf.pos.y;
-						board.UpdatePlayerPosition(0, playerSelf.pos);
-						accumMove = sf::Vector2f(0,0);
-						//accumMove = play;
-					}
-					else
-					{
-						// amb un map aniríem directament al idPlayer que volem
-					}
+					pack >> playersMap[idPlayer]->pos.x;
+					pack >> playersMap[idPlayer]->pos.y;
+					board.UpdatePlayerPosition(0, playersMap[idPlayer]->pos);
+					accumMove = sf::Vector2f(0, 0);
 				}
 					break;
 				}
@@ -187,14 +180,13 @@ void GraphicsInterface()
 		//just don't start
 	}
 
-	//crear el taulell amb les coordenades que ara ja tenim
-	board.InitializePlayerPosition(playerSelf.pos);
-
 	accumMove = sf::Vector2f(0,0);
 
-	for(int i = 0; i<otherPlayers.size(); i++)
+	//crear el taulell amb les coordenades que ara ja tenim
+	for (std::map<int, PlayerInfo*>::iterator it = playersMap.begin(); it != playersMap.end(); ++it)
 	{
-		board.InitializePlayerPosition(otherPlayers[i]->pos);
+		PlayerInfo* player = it->second;
+		//board.InitializeSlither(player->pos);
 	}
 
 	board.window.create(sf::VideoMode(SCREEN_PROVISIONAL, SCREEN_PROVISIONAL), "Ejemplo tablero");
@@ -204,7 +196,6 @@ void GraphicsInterface()
 		board.Commands();
 		accumMove += board.playerMovement;
 	}
-	
 }
 
 
@@ -217,7 +208,7 @@ void AccumControl()
 
 	sf::Clock clock;
 	sf::Packet pack;
-	sf::Vector2f lastPos = playerSelf.pos;
+	sf::Vector2f lastPos = m_playerInfo->pos;
 
 	while (true)
 	{
@@ -228,7 +219,7 @@ void AccumControl()
 			{
 				pack.clear();
 				pack << static_cast<int>(Protocol::MOVE);
-				pack << playerSelf.id;
+				pack << m_playerInfo->id;
 				pack << accumMove.x << accumMove.y;
 				if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
 				{

@@ -11,14 +11,15 @@ Board::~Board()
 {
 }
 
-void Board::InitializePlayerPosition(sf::Vector2f playerPos)
+void InitializeSlither(int idPlayer, sf::Vector2f pos)
 {
-	playerPositions.push_back(BoardToWindows(playerPos));
+	//Slither* s = new Slither();
+	//playerPositions.push_back(BoardToWindows(playerPos));
 }
 
-void Board::UpdatePlayerPosition(int playerNum, sf::Vector2f pos)
+void Board::UpdatePlayerPosition(int idPlayer, sf::Vector2f pos)
 {
-	playerPositions[playerNum] = pos;
+	//playerPositions[playerNum] = pos;
 }
 
 /**
@@ -67,7 +68,7 @@ void Board::DibujaSFML()
 	}
 
 	//pintar los players (provisional)
-	for (int i = 0; i < playerPositions.size(); i++)
+	/*for (int i = 0; i < playerPositions.size(); i++)
 	{
 		sf::CircleShape shape(RADIO_AVATAR);
 
@@ -82,7 +83,7 @@ void Board::DibujaSFML()
 
 		shape.setPosition(playerPositions[i]);
 		window.draw(shape);
-	}
+	}*/
 
 	window.display();
 
@@ -93,7 +94,7 @@ void Board::Commands()
 	sf::Event event;
 	playerMovement = sf::Vector2f(0, 0);
 	//std::cout << "commands"<<std::endl;
-	//Este primer WHILE es para controlar los eventos del mouse
+
 	while (window.pollEvent(event))
 	{
 		//std::cout << "commands while"<<std::endl;

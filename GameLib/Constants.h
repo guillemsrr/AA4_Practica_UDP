@@ -10,19 +10,8 @@
 
 #define SCREEN_WIDTH 960
 #define SCREEN_HEIGHT 540
-#define SCREEN_PROVISIONAL 512
 
-#define MAX 100
-#define SIZE_TABLERO 64
-#define SIZE_FILA_TABLERO 8
-#define LADO_CASILLA 64
-#define RADIO_AVATAR 25.f
-#define OFFSET_AVATAR 5
-
-#define SIZE_TABLERO 64
-#define LADO_CASILLA 64
-#define RADIO_AVATAR 25.f
-#define OFFSET_AVATAR 5
+const float speed = 5.0f;
 
 enum Protocol
 {

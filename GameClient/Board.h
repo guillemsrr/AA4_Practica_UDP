@@ -6,7 +6,8 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <Constants.h>
-#include <vector>
+#include "Player.h"
+#include "Slither.h"
 
 
 class Board
@@ -15,13 +16,13 @@ public:
 	Board();
 	~Board();
 	
-	void InitializePlayerPosition(sf::Vector2f playerPos);
-	void UpdatePlayerPosition(int playerNum, sf::Vector2f pos);
-	void DibujaSFML();
-
-private:
-	sf::Vector2f BoardToWindows(sf::Vector2f _position);
-	std::vector<sf::Vector2f> playerPositions;//number 0 is the player, the rest are enemies
-
+	void InitializeSlither(Player* player);
+	void UpdateSlither(int id);
+	void UpdateSlithers();
+	void DrawBoard();
+	void Commands();
+	sf::RenderWindow window;
+	sf::Vector2f playerMovement;
+	std::map<int, Slither*> slithersMap;//key is idPlayer
 };
 

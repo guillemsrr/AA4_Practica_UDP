@@ -4,7 +4,6 @@
 
 Board::Board()
 {
-	
 }
 
 
@@ -12,83 +11,73 @@ Board::~Board()
 {
 }
 
-void Board::InitializePlayerPosition(sf::Vector2f playerPos)
+void Board::InitializeSlither(Player* player)
 {
-	playerPositions.push_back(playerPos);
+	Slither* s = new Slither(player);
+	slithersMap[player->id] = s;
 }
 
-void Board::UpdatePlayerPosition(int playerNum, sf::Vector2f pos)
+void Board::UpdateSlithers()
 {
-}
-
-/**
- * Si guardamos las posiciones de las piezas con valores del 0 al 7,
- * esta funciÃ³n las transforma a posiciÃ³n de ventana (pixel), que va del 0 al 512
- */
-sf::Vector2f Board::BoardToWindows(sf::Vector2f _position)
-{
-	return sf::Vector2f(_position.x * LADO_CASILLA + OFFSET_AVATAR, _position.y * LADO_CASILLA + OFFSET_AVATAR);
-}
-
-/**
- * Contiene el cÃ³digo SFML que captura el evento del clic del mouse y el cÃ³digo que pinta por pantalla
- */
-void Board::DibujaSFML()
-{
-	sf::RenderWindow window(sf::VideoMode(SCREEN_PROVISIONAL, SCREEN_PROVISIONAL), "Ejemplo tablero");
-	while (window.isOpen())
+	for (std::map<int, Slither*>::iterator it = slithersMap.begin(); it != slithersMap.end(); ++it)
 	{
-		window.clear();
+		Slither* slither = it->second;
+		slither->UpdateSlitherPosition();
+	}
+}
 
-		//A partir de aquÃ­ es para pintar por pantalla
-		//Este FOR es para el tablero
-		for (int i = 0; i < 8; i++)
+void Board::UpdateSlither(int id)
+{
+	slithersMap[id]->UpdateSlitherPosition();
+}
+
+
+void Board::DrawBoard()
+{
+	window.clear();
+
+	//paint all players
+	for (std::map<int, Slither*>::iterator it = slithersMap.begin(); it != slithersMap.end(); ++it)
+	{
+		Slither* slither = it->second;
+		for each (sf::CircleShape circle in slither->bodyCircles)
 		{
-			for (int j = 0; j < 8; j++)
-			{
-				sf::RectangleShape rectBlanco(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
-				rectBlanco.setFillColor(sf::Color::White);
-				if (i % 2 == 0)
-				{
-					//Empieza por el blanco
-					if (j % 2 == 0)
-					{
-						rectBlanco.setPosition(sf::Vector2f(i * LADO_CASILLA, j * LADO_CASILLA));
-						window.draw(rectBlanco);
-					}
-				}
-				else
-				{
-					//Empieza por el negro
-					if (j % 2 == 1)
-					{
-						rectBlanco.setPosition(sf::Vector2f(i * LADO_CASILLA, j * LADO_CASILLA));
-						window.draw(rectBlanco);
-					}
-				}
-			}
+			window.draw(circle);
 		}
-
-		//pintar los players (provisional)
-		for (int i = 0; i < playerPositions.size(); i++)
-		{
-			sf::CircleShape shape(RADIO_AVATAR);
-			
-			if (i == 0)
-			{
-				shape.setFillColor(sf::Color::Blue);
-			}
-			else
-			{
-				shape.setFillColor(sf::Color::Red);
-			}
-
-			shape.setPosition(BoardToWindows(playerPositions[i]));
-			window.draw(shape);
-		}
-
-
-		window.display();
 	}
 
+	window.display();
+}
+
+void Board::Commands()
+{
+	sf::Event event;
+	playerMovement = sf::Vector2f(0, 0);
+	//std::cout << "commands"<<std::endl;
+
+	while (window.pollEvent(event))
+	{
+		//std::cout << "commands while"<<std::endl;
+		switch (event.key.code)
+		{
+		case sf::Keyboard::Key::Escape:
+			window.close();
+			break;
+		case sf::Keyboard::Key::Left:
+			playerMovement.x -= speed;
+			break;
+		case sf::Keyboard::Key::Right:
+			playerMovement.x += speed;
+			break;
+		case sf::Keyboard::Key::Up:
+			playerMovement.y -= speed;
+			break;
+		case sf::Keyboard::Key::Down:
+			playerMovement.y += speed;
+			break;
+		default:
+			break;
+
+		}
+	}
 }

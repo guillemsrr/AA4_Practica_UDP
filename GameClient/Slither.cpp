@@ -2,15 +2,43 @@
 
 
 
-Slither::Slither(sf::Vector2f _headPos, sf::Color _color, int _numCircles, sf::Vector2f dir = sf::Vector2f(1.f, 0.f))
+Slither::Slither(Player* _player)
 {
-	headPos = _headPos;
-	color = _color;
-	numCircles = _numCircles;
-	direction = dir;
+	player = _player;
+	UpdateRadius();
+	for each (sf::Vector2f  pos in player->bodyPositions)
+	{
+		CreateBodyCircle(pos);
+	}
 }
 
 
 Slither::~Slither()
 {
+}
+
+void Slither::UpdateSlitherPosition()
+{
+	for(int i = 0; i< bodyCircles.size(); i++)
+	{
+		bodyCircles[i].setPosition(player->bodyPositions[i]);
+	}
+}
+
+bool Slither::DetectCollision(Slither* enemy)
+{
+	return false;
+}
+
+void Slither::UpdateRadius()
+{
+	radius = 10.f + player->bodyPositions.size() * radiusCirclesRelation;
+}
+
+void Slither::CreateBodyCircle(sf::Vector2f pos)
+{
+	sf::CircleShape shape(radius);
+	shape.setFillColor(player->color);
+	shape.setPosition(pos);
+	bodyCircles.push_back(shape);
 }

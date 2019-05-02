@@ -1,3 +1,4 @@
-﻿  Slither.cpp
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\Slither.cpp(5): error C2572: 'Slither::Slither': redefinition of default argument: parameter 1
-  G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\Slither.h(7): note: see declaration of 'Slither::Slither'
+﻿  Player.cpp
+  Slither.cpp
+  Generating Code...
+  GameClient.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameClient.exe

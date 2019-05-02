@@ -2,6 +2,9 @@
 #include <string>
 #include "SFML/Network.hpp"
 #include <SFML/Graphics.hpp>
+#include <vector>
+#include <iostream>
+#include "Constants.h"
 
 class PlayerInfo
 {
@@ -12,8 +15,8 @@ public:
 
 	int id;
 	std::string alias;
-	sf::Vector2f pos;
+	std::vector<sf::Vector2f> bodyPositions;
 	sf::Color color;
-	int numCircles;
+	sf::Vector2f direction;
 };
 

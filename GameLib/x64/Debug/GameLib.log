@@ -1,10 +1,10 @@
 ﻿  PlayerInfo.cpp
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameLib\PlayerInfo.cpp(14): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameLib\PlayerInfo.cpp(17): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameLib\PlayerInfo.cpp(15): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameLib\PlayerInfo.cpp(18): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float

@@ -69,7 +69,7 @@ void DisconnectionCheckerThreadFunction()
 				{
 					//Añadir el paquete a la lista de críticos
 					pack << static_cast<int>(Protocol::DISCONNECTED);
-					int idPack = criticPackets.size();
+					int idPack = (int)criticPackets.size();
 					pack << idPack;
 					pack << it->second->id;				
 
@@ -79,7 +79,7 @@ void DisconnectionCheckerThreadFunction()
 						if (it2 != it)
 						{
 
-							CriticPack* cp = new CriticPack(criticPackets.size(), pack, it2->second->ip, it2->second->port);
+							CriticPack* cp = new CriticPack((int)criticPackets.size(), pack, it2->second->ip, it2->second->port);
 							criticPackets[idPack] = cp;
 
 							sock.send(pack, it2->second->ip, it2->second->port);
@@ -120,6 +120,7 @@ void CriticPacketsManagerThreadFunction()
 
 int main()
 {
+	srand(time(NULL));
 	if (sock.bind(PORT) != sf::Socket::Status::Done)
 	{
 		std::cout << "Error on binding socket" << std::endl;
@@ -186,6 +187,8 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	std::string alias;
 	pack >> alias;
 
+	bool clientExists = false;
+	ClientProxy* newClient = nullptr;
 	//busquem per ip i port si el client ja existeix:
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
@@ -193,36 +196,42 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		if (client->ip == ip && client->port == port)
 		{
 			std::cout << "Client already exists" << std::endl;
-			pack.clear();
-			pack << static_cast<int>(Protocol::WELCOME);
-			pack << client->id;
-			pack << client->pos.x;
-			pack << client->pos.y;
-			sock.send(pack, ip, port);
-			return;
+			newClient = client;
+			clientExists = true;
+			break;
 		}
 	}
 
-	//és un nou player
-	int id = clientProxies.size();
-	int x = id % SIZE_FILA_TABLERO;
-	int y = id % SIZE_FILA_TABLERO;
-	ClientProxy* newClient = new ClientProxy(id, alias, x, y, ip, port);
+	if (!clientExists)
+	{
+		std::cout << "creating new client" << std::endl;
+		//és un nou player
+		int id = (int)clientProxies.size();
+		float x = rand() % SCREEN_WIDTH;
+		float y = rand() % SCREEN_HEIGHT;
+		sf::Vector2f headPos(x, y);
+		newClient = new ClientProxy(id, alias, ip, port, headPos);
+	}
+
+	if (newClient == nullptr)
+	{
+		std::cout << "Problem with newClient" << std::endl;
+		return;
+	}
+
+
+	//introduïm les dades del player
 	pack.clear();
 	pack << static_cast<int>(Protocol::WELCOME);
-	pack << id;
-	pack << x;
-	pack << y;
+	newClient->AddDataToPacket(&pack);
+	
+	//els altres players:
 	pack << static_cast<int>(clientProxies.size());
-
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
-		if (it->second->id != id)
+		if (it->second->id != newClient->id)
 		{
-			pack << it->second->id;
-			pack << it->second->alias;
-			pack << it->second->pos.x;
-			pack << it->second->pos.y;
+			it->second->AddDataToPacket(&pack);
 		}
 	}
 	sock.send(pack, ip, port);
@@ -230,23 +239,24 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	//Enviar NEW_PLAYER a todos los demás clientes
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
-		//com que cada vegada hem d'anar posant un id del packet diferent, anem tornant a implir el packet
-		pack.clear();
-		pack << static_cast<int>(Protocol::NEW_PLAYER);
-		pack << id;
-		pack << alias;
-		pack << x;
-		pack << y;
-		int idPack = criticPackets.size();
-		pack << idPack;
+		if (it->second->id != newClient->id)
+		{
+			//com que cada vegada hem d'anar posant un id del packet diferent, anem tornant a omplir el packet
+			pack.clear();
+			pack << static_cast<int>(Protocol::NEW_PLAYER);
+			newClient->AddDataToPacket(&pack);
+			int idPack = (int)criticPackets.size();
+			pack << idPack;
 
-		CriticPack* cp = new CriticPack(criticPackets.size(), pack, it->second->ip, it->second->port);
-		criticPackets[idPack] = cp;
-		sock.send(pack, it->second->ip, it->second->port);
+			CriticPack* cp = new CriticPack((int)criticPackets.size(), pack, it->second->ip, it->second->port);
+			criticPackets[idPack] = cp;
+			sock.send(pack, it->second->ip, it->second->port);
+		}
 	}
 
 	//afegim el nou client en el map
-	clientProxies[id] = newClient;
+	if(!clientExists)
+		clientProxies[newClient->id] = newClient;
 }
 
 void MovementControl(sf::Packet pack)
@@ -254,21 +264,23 @@ void MovementControl(sf::Packet pack)
 	int idPlayer;
 	int idMove;
 	pack >> idPlayer>>idMove;
-	sf::Vector2f pos;
-	pack >> pos.x >> pos.y;
+	sf::Vector2f sumPos;
+	pack >> sumPos.x >> sumPos.y;
 
+	sf::Vector2f possiblePos = clientProxies[idPlayer]->SumToHeadPosition(sumPos);
 	//controlar la posició
 	//marges de la pantalla?
 
-	clientProxies[idPlayer]->pos += pos;
+	//movem el player
+	clientProxies[idPlayer]->UpdatePosition(possiblePos);
 
 	//ho enviem a tots els players
 	pack.clear();
 	pack << static_cast<int>(Protocol::MOVE);
 	pack << idPlayer;
 	pack << idMove;
-	pack << clientProxies[idPlayer]->pos.x;
-	pack << clientProxies[idPlayer]->pos.y;
+	clientProxies[idPlayer]->PutBodyPositions(&pack);
+
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
 		sock.send(pack, it->second->ip, it->second->port);

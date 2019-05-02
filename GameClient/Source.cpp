@@ -5,7 +5,7 @@
 #include "Board.h"
 #include <Constants.h>
 #include <thread>
-#include <PlayerInfo.h>
+#include "Player.h"
 
 //---------CLIENTE---------//
 
@@ -13,8 +13,8 @@
 sf::UdpSocket sock;
 bool received = false;
 
-PlayerInfo* m_playerInfo;
-std::map<int, PlayerInfo*> playersMap;//seria millor un map
+Player* m_player;
+std::map<int, Player*> playersMap;
 sf::Vector2f accumMove;
 Board board;
 
@@ -38,9 +38,8 @@ int main()
 	std::thread graphicsInterface(&GraphicsInterface);
 	graphicsInterface.detach();
 
-	std::thread acumControlThread(&AccumControl);
-	acumControlThread.detach();
-
+	std::thread accumControlThread(&AccumControl);
+	accumControlThread.detach();
 
 	while (true)
 	{
@@ -54,7 +53,6 @@ int main()
 		else
 		{
 			//std::cout << "Packet received" << std::endl;
-
 			if (ip == IP && port == PORT)//ES EL SERVER
 			{
 				int num;
@@ -66,41 +64,28 @@ int main()
 					std::cout << "WELCOME received" << std::endl;
 
 					//create the player:
-					PlayerInfo* p = new PlayerInfo();
-					pack >> p->id;
-					pack >> p->alias;
-					pack >> p->pos.x;
-					pack >> p->pos.y;
-					m_playerInfo = p;
-					playersMap[p->id] = p;
+					m_player = new Player(&pack);
+					m_player->color = sf::Color::Green;
+					playersMap[m_player->id] = m_player;
 
 					//create the others:
 					int sizeOthers;
 					pack >> sizeOthers;
 					for (int i = 0; i < sizeOthers; i++)
 					{
-						PlayerInfo* p = new PlayerInfo();
-						pack >> p->id;
-						pack >> p->alias;
-						pack >> p->pos.x;
-						pack >> p->pos.y;
-
-						if (playersMap.count(p->id) == 0)
-						{
-							playersMap[p->id] = p;
-						}
+						Player* p = new Player(&pack);
+						p->color = sf::Color::Red;
+						playersMap[p->id] = p;
 					}
 					received = true;
 				}
 					break;
 				case NEW_PLAYER:
 				{
-					PlayerInfo* p = new PlayerInfo();
-					pack >> p->id;
-					pack >> p->alias;
-					pack >> p->pos.x;
-					pack >> p->pos.y;
+					Player* p = new Player(&pack);
+					p->color = sf::Color::Red;
 					playersMap[p->id] = p;
+					board.InitializeSlither(p);
 
 					int idPack;
 					pack >> idPack;
@@ -112,7 +97,7 @@ int main()
 					//std::cout << "PING received" << std::endl;
 					pack.clear();
 					pack << static_cast<int>(Protocol::PONG);
-					pack << m_playerInfo->id;
+					pack << m_player->id;
 					sock.send(pack, IP, PORT);
 				}
 					break;
@@ -133,10 +118,16 @@ int main()
 					int idPlayer;
 					int idMove;
 					pack >> idPlayer >> idMove;
-					pack >> playersMap[idPlayer]->pos.x;
-					pack >> playersMap[idPlayer]->pos.y;
-					board.UpdatePlayerPosition(0, playersMap[idPlayer]->pos);
-					accumMove = sf::Vector2f(0, 0);
+
+					playersMap[idPlayer]->UpdatePosition(&pack);
+					board.UpdateSlither(idPlayer);
+
+					if (idPlayer == m_player->id)
+					{
+						accumMove = sf::Vector2f(0, 0);
+					}
+
+					//dins de MOVE també passa els altres jugadors??
 				}
 					break;
 				}
@@ -151,7 +142,7 @@ void HelloSending()
 {
 	sf::Clock clock;
 	sf::Packet pack;
-	std::string alias = "Guillem";
+	std::string alias = "Default Alias";
 	pack << static_cast<int>(Protocol::HELLO);
 	pack << alias;
 
@@ -183,21 +174,20 @@ void GraphicsInterface()
 	accumMove = sf::Vector2f(0,0);
 
 	//crear el taulell amb les coordenades que ara ja tenim
-	for (std::map<int, PlayerInfo*>::iterator it = playersMap.begin(); it != playersMap.end(); ++it)
+	for (std::map<int, Player*>::iterator it = playersMap.begin(); it != playersMap.end(); ++it)
 	{
-		PlayerInfo* player = it->second;
-		//board.InitializeSlither(player->pos);
+		Player* player = it->second;
+		board.InitializeSlither(player);
 	}
 
-	board.window.create(sf::VideoMode(SCREEN_PROVISIONAL, SCREEN_PROVISIONAL), "Ejemplo tablero");
+	board.window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Slither Remake");
 	while (board.window.isOpen())
 	{
-		board.DibujaSFML();
+		board.DrawBoard();
 		board.Commands();
 		accumMove += board.playerMovement;
 	}
 }
-
 
 void AccumControl()
 {
@@ -208,18 +198,18 @@ void AccumControl()
 
 	sf::Clock clock;
 	sf::Packet pack;
-	sf::Vector2f lastPos = m_playerInfo->pos;
 
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
 		if (t1.asSeconds() > movementTimer)
 		{
-			if (true)//accumMove.x != 0 && accumMove.y != 0)
+			if (abs(accumMove.x) + abs(accumMove.y) > 0)
 			{
 				pack.clear();
 				pack << static_cast<int>(Protocol::MOVE);
-				pack << m_playerInfo->id;
+				pack << m_player->id;
+				pack << 1;//idMove provisional
 				pack << accumMove.x << accumMove.y;
 				if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
 				{

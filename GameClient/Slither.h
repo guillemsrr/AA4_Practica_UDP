@@ -1,19 +1,24 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <vector>
+#include "Player.h"
 
 class Slither
 {
 public:
-	Slither::Slither(sf::Vector2f _headPos, sf::Color _color, int _numCircles, sf::Vector2f dir = sf::Vector2f(1.f, 0.f));
+	Slither::Slither(Player* player);
 	~Slither();
 
-	sf::Vector2f headPos;
-	sf::Vector2f direction;
-	sf::Color color;
-	int numCircles;
-	float radius;
+	void UpdateSlitherPosition();
+	bool DetectCollision(Slither* enemy);
+
+	std::vector<sf::CircleShape> bodyCircles;
 
 private:
-	const float circlesDistance = 1.f;
+	Player* player;
+	float radius;
+	const float radiusCirclesRelation = 1.f;
+	void UpdateRadius();
+	void CreateBodyCircle(sf::Vector2f pos);
 };
 

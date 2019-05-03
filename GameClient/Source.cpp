@@ -6,6 +6,7 @@
 #include <Constants.h>
 #include <thread>
 #include "Player.h"
+#include <mutex>
 
 //---------CLIENTE---------//
 
@@ -27,6 +28,8 @@ void HelloSending();
 void GraphicsInterface();
 void AccumControl();
 void SendAcknowledge(int idPack);
+
+std::mutex mtx;
 
 
 int main()
@@ -52,6 +55,8 @@ int main()
 		}
 		else
 		{
+			std::lock_guard<std::mutex> guard(mtx);
+
 			//std::cout << "Packet received" << std::endl;
 			if (ip == IP && port == PORT)//ES EL SERVER
 			{
@@ -61,12 +66,12 @@ int main()
 				{
 				case WELCOME:
 				{
-					std::cout << "WELCOME received" << std::endl;
-
 					//create the player:
 					m_player = new Player(&pack);
 					m_player->color = sf::Color::Green;
 					playersMap[m_player->id] = m_player;
+
+					std::cout << "WELCOME player "<< m_player->id << std::endl;
 
 					//create the others:
 					int sizeOthers;
@@ -176,6 +181,8 @@ void GraphicsInterface()
 	//crear el taulell amb les coordenades que ara ja tenim
 	for (std::map<int, Player*>::iterator it = playersMap.begin(); it != playersMap.end(); ++it)
 	{
+		std::lock_guard<std::mutex> guard(mtx);
+
 		Player* player = it->second;
 		board.InitializeSlither(player);
 	}
@@ -211,6 +218,9 @@ void AccumControl()
 				pack << m_player->id;
 				pack << 1;//idMove provisional
 				pack << accumMove.x << accumMove.y;
+
+				return;
+
 				if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
 				{
 					std::cout << "Error sending the packet" << std::endl;
@@ -230,7 +240,7 @@ void AccumControl()
 void SendAcknowledge(int idPack)
 {
 	sf::Packet pack;
-	pack << idPack;
 	pack << static_cast<int>(Protocol::ACK);
+	pack << idPack;
 	sock.send(pack, IP, PORT);
 }

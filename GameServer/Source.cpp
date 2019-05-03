@@ -164,7 +164,9 @@ int main()
 			std::cout << "ACK received" << std::endl;
 			int auxIdPack;
 			pack >> auxIdPack;
+			//std::cout << "num criticPackets before: " << (int)criticPackets.size() << std::endl;
 			criticPackets.erase(criticPackets.find(auxIdPack));
+			//std::cout << "num criticPackets after: " << (int)criticPackets.size() << std::endl;
 			break;
 		case PONG:
 			//std::cout << "PONG received" << std::endl;
@@ -195,7 +197,7 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		ClientProxy* client = it->second;
 		if (client->ip == ip && client->port == port)
 		{
-			std::cout << "Client already exists" << std::endl;
+			std::cout << "Client already exists. The id is: "<<client->id << std::endl;
 			newClient = client;
 			clientExists = true;
 			break;
@@ -219,7 +221,6 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		return;
 	}
 
-
 	//introduïm les dades del player
 	pack.clear();
 	pack << static_cast<int>(Protocol::WELCOME);
@@ -239,22 +240,20 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	//Enviar NEW_PLAYER a todos los demás clientes
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
-		if (it->second->id != newClient->id)
-		{
-			//com que cada vegada hem d'anar posant un id del packet diferent, anem tornant a omplir el packet
-			pack.clear();
-			pack << static_cast<int>(Protocol::NEW_PLAYER);
-			newClient->AddDataToPacket(&pack);
-			int idPack = (int)criticPackets.size();
-			pack << idPack;
+		//com que cada vegada hem d'anar posant un id del packet diferent, anem tornant a omplir el packet
+		pack.clear();
+		pack << static_cast<int>(Protocol::NEW_PLAYER);
+		newClient->AddDataToPacket(&pack);
+		int idPack = (int)criticPackets.size();
+		pack << idPack;
 
-			CriticPack* cp = new CriticPack((int)criticPackets.size(), pack, it->second->ip, it->second->port);
-			criticPackets[idPack] = cp;
-			sock.send(pack, it->second->ip, it->second->port);
-		}
+		CriticPack* cp = new CriticPack((int)criticPackets.size(), pack, it->second->ip, it->second->port);
+		criticPackets[idPack] = cp;
+		std::cout << "sending NEW_PLAYER" << std::endl;
+		sock.send(pack, it->second->ip, it->second->port);
 	}
 
-	//afegim el nou client en el map
+	//finalment afegim el nou client al map
 	if(!clientExists)
 		clientProxies[newClient->id] = newClient;
 }

@@ -20,9 +20,12 @@ public:
 	void UpdateSlither(int id);
 	void UpdateSlithers();
 	void DrawBoard();
-	void Commands();
+	void Commands(Player* player);
 	sf::RenderWindow window;
 	sf::Vector2f playerMovement;
 	std::map<int, Slither*> slithersMap;//key is idPlayer
+
+private:
+	const float pixelsMove = 5.0f;
 };
 

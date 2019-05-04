@@ -1,5 +1,5 @@
 ﻿  Source.cpp
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(123): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(212): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(213): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(46): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(259): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\Source.cpp(260): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   GameServer.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameServer.exe

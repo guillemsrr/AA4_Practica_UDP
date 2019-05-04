@@ -10,7 +10,7 @@ class PlayerInfo
 {
 public:
 	PlayerInfo();
-	PlayerInfo(int id, std::string alias, int x, int y, sf::Color _color);
+	PlayerInfo(int id, std::string alias, float x, float y, sf::Color _color);
 	~PlayerInfo();
 
 	int id;

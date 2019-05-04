@@ -15,12 +15,18 @@ public:
 	unsigned short port;
 	int numPings;
 
+	sf::Vector2f accumMovement;
+
 	void CreateInitialBodyPositions(sf::Vector2f headPos);
 	void PutBodyPositions(sf::Packet* pack);
 	void AddDataToPacket(sf::Packet* pack);
 
-	sf::Vector2f SumToHeadPosition(sf::Vector2f movement);
+	sf::Vector2f SumToHeadPosition();
 	void CreateBodyPosition();
-	void UpdatePosition(sf::Vector2f headPos);	
+	void UpdatePosition(sf::Vector2f headPos);
+	int lastIdMove;
+
+private:
+	const float separation = 15.0f;
 };
 

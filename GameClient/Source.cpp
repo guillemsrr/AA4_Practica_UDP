@@ -13,23 +13,26 @@
 
 sf::UdpSocket sock;
 bool received = false;
+std::mutex mtx;
 
 Player* m_player;
 std::map<int, Player*> playersMap;
+std::map<int, sf::Vector2f> movesMap;//idMove i headPos
 sf::Vector2f accumMove;
 Board board;
 
 //timers:
-float helloSendingTimer = 2.f;
-float movementTimer = 0.1f;
+const float helloSendingTimer = 2.f;
+const float movementTimer = 0.1f;
+const float criticResendTimer = 2.f;
+const float percentLostTimer = 0.05f;
 
 //declarations:
 void HelloSending();
 void GraphicsInterface();
-void AccumControl();
+void MoveSending();
 void SendAcknowledge(int idPack);
 
-std::mutex mtx;
 
 
 int main()
@@ -41,7 +44,7 @@ int main()
 	std::thread graphicsInterface(&GraphicsInterface);
 	graphicsInterface.detach();
 
-	std::thread accumControlThread(&AccumControl);
+	std::thread accumControlThread(&MoveSending);
 	accumControlThread.detach();
 
 	while (true)
@@ -55,7 +58,7 @@ int main()
 		}
 		else
 		{
-			std::lock_guard<std::mutex> guard(mtx);
+			//std::lock_guard<std::mutex> guard(mtx);
 
 			//std::cout << "Packet received" << std::endl;
 			if (ip == IP && port == PORT)//ES EL SERVER
@@ -119,20 +122,43 @@ int main()
 					break;
 				case MOVE:
 				{
-					//std::cout << "MOVE" << std::endl;
+					//std::cout << "MOVE received" << std::endl;
 					int idPlayer;
 					int idMove;
 					pack >> idPlayer >> idMove;
 
-					playersMap[idPlayer]->UpdatePosition(&pack);
-					board.UpdateSlither(idPlayer);
-
 					if (idPlayer == m_player->id)
 					{
-						accumMove = sf::Vector2f(0, 0);
-					}
+						//vector on posem els moviments que volem esborrar
+						std::vector<std::map<int, sf::Vector2f>::iterator> toErase;
+						//comprobar que no sigui un moviment anterior
+						if (movesMap.find(idMove) != movesMap.end())//si existeix el idMove
+						{
+							//si ens interessa, hem de posar les posicions que ens han confirmat.
+							for (std::map<int, sf::Vector2f>::iterator it = movesMap.begin(); it != movesMap.end(); ++it)
+							{
+								if (it->first < idMove)//esborrem els moviments anteriors
+								{
+									toErase.push_back(it);
+								}
+							}
 
-					//dins de MOVE també passa els altres jugadors??
+							while ((int)toErase.size() != 0)
+							{
+								movesMap.erase(toErase[0]);
+								toErase.erase(toErase.begin());
+							}
+
+							m_player->UpdatePosition(&pack);
+							board.UpdateSlither(idPlayer);
+							accumMove = sf::Vector2f(0,0);//tornem a posar l'acumulat a 0
+						}
+					}
+					else
+					{
+						playersMap[idPlayer]->UpdatePosition(&pack);
+						board.UpdateSlither(idPlayer);
+					}
 				}
 					break;
 				}
@@ -191,12 +217,12 @@ void GraphicsInterface()
 	while (board.window.isOpen())
 	{
 		board.DrawBoard();
-		board.Commands();
+		board.Commands(m_player);
 		accumMove += board.playerMovement;
 	}
 }
 
-void AccumControl()
+void MoveSending()
 {
 	while (!received)
 	{
@@ -216,18 +242,13 @@ void AccumControl()
 				pack.clear();
 				pack << static_cast<int>(Protocol::MOVE);
 				pack << m_player->id;
-				pack << 1;//idMove provisional
+				pack << (int)movesMap.size();//podria ser que no funcionés així
+				movesMap[(int)movesMap.size()] = accumMove;
 				pack << accumMove.x << accumMove.y;
-
-				return;
 
 				if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
 				{
 					std::cout << "Error sending the packet" << std::endl;
-				}
-				else
-				{
-					//std::cout << "moving" << std::endl;
 				}
 			}
 			

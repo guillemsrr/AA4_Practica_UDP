@@ -8,7 +8,7 @@ PlayerInfo::PlayerInfo()
 }
 
 
-PlayerInfo::PlayerInfo(int _id, std::string _alias, int _x, int _y, sf::Color _color)
+PlayerInfo::PlayerInfo(int _id, std::string _alias, float _x, float _y, sf::Color _color)
 {
 	id = _id;
 	alias = _alias;

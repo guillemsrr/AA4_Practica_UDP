@@ -1,5 +1,5 @@
 #pragma once
-
+#include <random>
 //casa Guillem
 //#define IP "192.168.1.133"
 #define IP "127.0.0.1"
@@ -10,8 +10,6 @@
 
 #define SCREEN_WIDTH 960
 #define SCREEN_HEIGHT 540
-
-const float speed = 5.0f;
 
 enum Protocol
 {
@@ -25,3 +23,11 @@ enum Protocol
 	DISCONNECTED,
 	MOVE
 };
+
+static float GetRandomFloat()
+{
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	static std::uniform_real_distribution<float> dis(0.f,1.f);
+	return dis(gen);
+}

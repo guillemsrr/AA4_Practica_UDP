@@ -6,19 +6,109 @@
 #include "CriticPack.h"
 #include <Constants.h>
 #include <thread>
+#include <math.h>
 
 
 //---------SERVIDOR---------//
 
 
 sf::UdpSocket sock;
+
+//lists / maps
 std::map<int, ClientProxy*> clientProxies;
 std::map<int, CriticPack*> criticPackets;
-float criticPacketsTimer = 10.0f;
+//std::vector<sf::Packet
+
+//timers:
+const float criticPacketsTimer = 10.0f;
+const float pingTimer = 5.0f;
+const float percentLostTimer = 0.05f;
+const float disconnectTimer = 10.f;
+const float maxUnoperativeTime = 30.f;
+const float serverUpdateTimer = 0.05f;//?¿?¿
+
 
 //declarations:
+//threads:
+void PingThreadFunction();
+void DisconnectionCheckerThreadFunction();
+void CriticPacketsManagerThreadFunction();
+void MovementControlThread();
+//other:
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
-void MovementControl(sf::Packet pack);
+void AccumMovement(sf::Packet pack);
+void MovementControl(int idPlayer, int idMove);
+
+
+int main()
+{
+	#pragma region Init
+	srand(time(NULL));
+	if (sock.bind(PORT) != sf::Socket::Status::Done)
+	{
+		std::cout << "Error on binding socket" << std::endl;
+		//return 0;
+	}
+
+	std::cout << "Socket binded successfully" << std::endl;
+
+	//Crear thread para PING
+	std::thread pingThread(&PingThreadFunction);
+	pingThread.detach();
+
+	//Crear thread para comprobar desconexiones
+	std::thread disconnectionCheckerThread(&DisconnectionCheckerThreadFunction);
+	disconnectionCheckerThread.detach();
+
+	//Crear thread para administrar paquetes críticos
+	std::thread criticPacketsManagerThread(&CriticPacketsManagerThreadFunction);
+	criticPacketsManagerThread.detach();
+
+	//Thread de validació de moviment
+	std::thread movementControlThread(&MovementControlThread);
+	movementControlThread.detach();
+
+	#pragma endregion
+
+	while (true)
+	{
+		sf::Packet pack;
+		sf::IpAddress ip;
+		unsigned short port;
+		if (sock.receive(pack, ip, port) != sf::Socket::Status::Done)
+		{
+			std::cout << "Error on receiving packet ip:" << ip.toString() << std::endl;
+		}
+
+		int num;
+		pack >> num;
+		switch (static_cast<Protocol>(num))
+		{
+		case HELLO:
+			std::cout << "HELLO received" << std::endl;
+			NewPlayer(ip, port, pack);
+			break;
+		case ACK:
+			std::cout << "ACK received" << std::endl;
+			int auxIdPack;
+			pack >> auxIdPack;
+			criticPackets.erase(criticPackets.find(auxIdPack));
+			break;
+		case PONG:
+			//std::cout << "PONG received" << std::endl;
+			int pId;
+			pack >> pId;
+			clientProxies[pId]->numPings = 0;
+			break;
+		case MOVE:
+			//std::cout << "MOVE received" << std::endl;
+			AccumMovement(pack);
+			break;
+		}
+	}
+
+	return 0;
+}
 
 void PingThreadFunction()
 {
@@ -27,11 +117,10 @@ void PingThreadFunction()
 
 	pack << static_cast<int>(Protocol::PING);
 
-
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > 2.0f)
+		if (t1.asSeconds() > pingTimer)
 		{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
@@ -47,7 +136,6 @@ void PingThreadFunction()
 
 			clock.restart();
 		}
-
 	}
 }
 
@@ -59,19 +147,19 @@ void DisconnectionCheckerThreadFunction()
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > 10.0f)
+		if (t1.asSeconds() > disconnectTimer)
 		{
 			//std::cout << "Checking for disconnected players" << std::endl;
 			//Comprobar si el numPings supera el límite y enviar el DISCONNECTED a todos los demás clientes
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); /*++it*/)
 			{
-				if (it->second->numPings >= 30)
+				if (it->second->numPings >= maxUnoperativeTime)
 				{
 					//Añadir el paquete a la lista de críticos
 					pack << static_cast<int>(Protocol::DISCONNECTED);
 					int idPack = (int)criticPackets.size();
 					pack << idPack;
-					pack << it->second->id;				
+					pack << it->second->id;
 
 					//Enviar DISCONNECTED
 					for (std::map<int, ClientProxy*>::iterator it2 = clientProxies.begin(); it2 != clientProxies.end(); ++it2)
@@ -118,70 +206,29 @@ void CriticPacketsManagerThreadFunction()
 	}
 }
 
-int main()
+void MovementControlThread()
 {
-	srand(time(NULL));
-	if (sock.bind(PORT) != sf::Socket::Status::Done)
-	{
-		std::cout << "Error on binding socket" << std::endl;
-		//return 0;
-	}
+	sf::Clock clock;
+	sf::Packet pack;
 
-	std::cout << "Socket binded successfully" << std::endl;
-
-	//Crear thread para PING
-	std::thread pingThread(&PingThreadFunction);
-	pingThread.detach();
-
-	//Crear thread para comprobar desconexiones
-	std::thread disconnectionCheckerThread(&DisconnectionCheckerThreadFunction);
-	disconnectionCheckerThread.detach();
-
-	//Crear thread para administrar paquetes críticos
-	std::thread criticPacketsManagerThread(&CriticPacketsManagerThreadFunction);
-	criticPacketsManagerThread.detach();
-
+	pack << static_cast<int>(Protocol::MOVE);
 
 	while (true)
 	{
-		sf::Packet pack;
-		sf::IpAddress ip;
-		unsigned short port;
-		if (sock.receive(pack, ip, port) != sf::Socket::Status::Done)
+		sf::Time t1 = clock.getElapsedTime();
+		if (t1.asSeconds() > percentLostTimer)
 		{
-			std::cout << "Error on receiving packet ip:" << ip.toString() << std::endl;
-		}
-
-		int num;
-		pack >> num;
-		switch (static_cast<Protocol>(num))
-		{
-		case HELLO:
-			std::cout << "HELLO received" << std::endl;
-			NewPlayer(ip, port, pack);
-			break;
-		case ACK:
-			std::cout << "ACK received" << std::endl;
-			int auxIdPack;
-			pack >> auxIdPack;
-			//std::cout << "num criticPackets before: " << (int)criticPackets.size() << std::endl;
-			criticPackets.erase(criticPackets.find(auxIdPack));
-			//std::cout << "num criticPackets after: " << (int)criticPackets.size() << std::endl;
-			break;
-		case PONG:
-			//std::cout << "PONG received" << std::endl;
-			int pId;
-			pack >> pId;
-			clientProxies[pId]->numPings = 0;
-			break;
-		case MOVE:
-			//std::cout << "MOVE received" << std::endl;
-			MovementControl(pack);
-			break;
+			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+			{
+				if (abs(it->second->accumMovement.x) + abs(it->second->accumMovement.y) > 0)
+				{
+					MovementControl(it->second->id, it->second->lastIdMove);
+					//break;
+				}
+			}
+			clock.restart();
 		}
 	}
-
-	return 0;
 }
 
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
@@ -258,7 +305,7 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		clientProxies[newClient->id] = newClient;
 }
 
-void MovementControl(sf::Packet pack)
+void AccumMovement(sf::Packet pack)
 {
 	int idPlayer;
 	int idMove;
@@ -266,15 +313,29 @@ void MovementControl(sf::Packet pack)
 	sf::Vector2f sumPos;
 	pack >> sumPos.x >> sumPos.y;
 
-	sf::Vector2f possiblePos = clientProxies[idPlayer]->SumToHeadPosition(sumPos);
-	//controlar la posició
-	//marges de la pantalla?
+	clientProxies[idPlayer]->accumMovement += sumPos;
+	clientProxies[idPlayer]->lastIdMove = idMove;
+}
 
-	//movem el player
-	clientProxies[idPlayer]->UpdatePosition(possiblePos);
+void MovementControl(int idPlayer, int idMove)
+{
+	sf::Vector2f possiblePos = clientProxies[idPlayer]->SumToHeadPosition();
+	//controlar la posició
+	if (possiblePos.x < 0 || possiblePos.x > SCREEN_WIDTH || possiblePos.y < 0 || possiblePos.y > SCREEN_HEIGHT)
+	{
+		//el posem just al límit de la pantalla? o simplement on era abans de moure's?
+		//si no fem update position, simplement li retornerem on era.
+	}
+	else
+	{
+		//tot correcte, movem el player
+		clientProxies[idPlayer]->UpdatePosition(possiblePos);
+	}
+
+	clientProxies[idPlayer]->accumMovement = sf::Vector2f(0,0);
 
 	//ho enviem a tots els players
-	pack.clear();
+	sf::Packet pack;
 	pack << static_cast<int>(Protocol::MOVE);
 	pack << idPlayer;
 	pack << idMove;

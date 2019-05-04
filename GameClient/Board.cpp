@@ -49,7 +49,7 @@ void Board::DrawBoard()
 	window.display();
 }
 
-void Board::Commands()
+void Board::Commands(Player* player)
 {
 	sf::Event event;
 	playerMovement = sf::Vector2f(0, 0);
@@ -64,16 +64,16 @@ void Board::Commands()
 			window.close();
 			break;
 		case sf::Keyboard::Key::Left:
-			playerMovement.x -= speed;
+			playerMovement.x -= pixelsMove*player->speed;
 			break;
 		case sf::Keyboard::Key::Right:
-			playerMovement.x += speed;
+			playerMovement.x += pixelsMove*player->speed;
 			break;
 		case sf::Keyboard::Key::Up:
-			playerMovement.y -= speed;
+			playerMovement.y -= pixelsMove*player->speed;
 			break;
 		case sf::Keyboard::Key::Down:
-			playerMovement.y += speed;
+			playerMovement.y += pixelsMove*player->speed;
 			break;
 		default:
 			break;

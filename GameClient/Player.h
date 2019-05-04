@@ -11,5 +11,6 @@ public:
 
 	void AddBodyPositions(sf::Packet* pack);
 	void Player::UpdatePosition(sf::Packet* pack);
+	float speed;
 };
 

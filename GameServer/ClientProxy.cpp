@@ -9,6 +9,7 @@ ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigne
 	port = _port;
 	numPings = 0;
 	CreateInitialBodyPositions(headPos);
+	accumMovement = sf::Vector2f(0,0);
 }
 
 ClientProxy::~ClientProxy()
@@ -23,10 +24,10 @@ void ClientProxy::CreateInitialBodyPositions(sf::Vector2f headPos)
 	direction = sf::Vector2f(1.f,0.f);
 
 	//make two more bodies:
-	sf::Vector2f pos = headPos + direction * speed;
+	sf::Vector2f pos = headPos + direction * separation;
 	bodyPositions.push_back(pos);
 
-	sf::Vector2f secondPos = pos + direction * speed;
+	sf::Vector2f secondPos = pos + direction * separation;
 	bodyPositions.push_back(secondPos);
 }
 
@@ -47,9 +48,9 @@ void ClientProxy::AddDataToPacket(sf::Packet* pack)
 	PutBodyPositions(pack);
 }
 
-sf::Vector2f ClientProxy::SumToHeadPosition(sf::Vector2f movement)
+sf::Vector2f ClientProxy::SumToHeadPosition()
 {
-	return bodyPositions[0] + movement;
+	return bodyPositions[0] + accumMovement;
 }
 
 void ClientProxy::CreateBodyPosition()
@@ -65,4 +66,6 @@ void ClientProxy::UpdatePosition(sf::Vector2f headPos)
 		bodyPositions[i] = bodyPositions[i - 1];
 	}
 	bodyPositions[0] = headPos;
+
+	accumMovement = sf::Vector2f(0,0);
 }

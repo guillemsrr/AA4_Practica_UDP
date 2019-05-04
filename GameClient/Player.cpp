@@ -11,6 +11,7 @@ Player::Player(sf::Packet* pack)
 	*pack >> id;
 	*pack >> alias;
 	AddBodyPositions(pack);
+	speed = 1.0f;
 }
 
 Player::~Player()

@@ -21,7 +21,9 @@ enum Protocol
 	PONG,
 	CMD,
 	DISCONNECTED,
-	MOVE
+	MOVE,
+	FOOD_EATEN,
+	FOOD_SPAWNED
 };
 
 static float GetRandomFloat()

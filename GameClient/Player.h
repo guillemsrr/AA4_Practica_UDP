@@ -9,8 +9,11 @@ public:
 	Player(sf::Packet* pack);
 	~Player();
 
+	float speed;
+
 	void AddBodyPositions(sf::Packet* pack);
 	void Player::UpdatePosition(sf::Packet* pack);
-	float speed;
+	void Player::UpdatePosition(sf::Vector2f headPos);
+
 };
 

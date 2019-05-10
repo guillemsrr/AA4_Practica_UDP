@@ -15,7 +15,6 @@
 
 sf::UdpSocket sock;
 const int maxFood = 100;
-const float PERCENT_PACKETLOSS = 0.1f;
 
 //lists / maps
 std::map<int, ClientProxy*> clientProxies;
@@ -83,35 +82,43 @@ int main()
 		sf::Packet pack;
 		sf::IpAddress ip;
 		unsigned short port;
+
 		if (sock.receive(pack, ip, port) != sf::Socket::Status::Done)
 		{
 			std::cout << "Error on receiving packet ip:" << ip.toString() << std::endl;
 		}
 
-		int num;
-		pack >> num;
-		switch (static_cast<Protocol>(num))
+		if (RandomPacketLost())
 		{
-		case HELLO:
-			std::cout << "HELLO received" << std::endl;
-			NewPlayer(ip, port, pack);
-			break;
-		case ACK:
-			std::cout << "ACK received" << std::endl;
-			int auxIdPack;
-			pack >> auxIdPack;
-			criticPackets.erase(criticPackets.find(auxIdPack));
-			break;
-		case PONG:
-			//std::cout << "PONG received" << std::endl;
-			int pId;
-			pack >> pId;
-			clientProxies[pId]->numPings = 0;
-			break;
-		case MOVE:
-			//std::cout << "MOVE received" << std::endl;
-			AccumMovement(pack);
-			break;
+			int num;
+			pack >> num;
+			switch (static_cast<Protocol>(num))
+			{
+			case HELLO:
+				std::cout << "HELLO received" << std::endl;
+				NewPlayer(ip, port, pack);
+				break;
+			case ACK:
+				std::cout << "ACK received" << std::endl;
+				int auxIdPack;
+				pack >> auxIdPack;
+				criticPackets.erase(criticPackets.find(auxIdPack));
+				break;
+			case PONG:
+				//std::cout << "PONG received" << std::endl;
+				int pId;
+				pack >> pId;
+				clientProxies[pId]->numPings = 0;
+				break;
+			case MOVE:
+				//std::cout << "MOVE received" << std::endl;
+				AccumMovement(pack);
+				break;
+			}
+		}
+		else
+		{
+			std::cout << "Packet lost " << std::endl;
 		}
 	}
 
@@ -231,7 +238,6 @@ void MovementControlThread()
 				if (abs(it->second->accumMovement.x) + abs(it->second->accumMovement.y) > 0)
 				{
 					MovementControl(it->second->id, it->second->lastIdMove);
-					//break;
 				}
 			}
 			clock.restart();
@@ -370,18 +376,4 @@ void MovementControl(int idPlayer, int idMove)
 void InitializeFood()
 {
 
-}
-
-//pag 28 referencia UDP
-bool RandomPacketLost()
-{
-	float rndPacketLoss = GetRandomFloat();
-	if (rndPacketLoss < PERCENT_PACKETLOSS)
-	{
-		//InputMemoryBitStream imbs(_message, bytesReceived);
-		//PacketType pt = Pac
-		//imbs.Read()
-	}
-
-	return false;
 }

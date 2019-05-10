@@ -15,6 +15,7 @@
 sf::UdpSocket sock;
 bool received = false;
 std::mutex mtx;
+int actualMoveID = 0;
 
 //maps:
 std::map<int, Player*> playersMap;
@@ -142,11 +143,30 @@ int main()
 						if (movesMap.find(idMove) != movesMap.end())//si existeix el idMove
 						{
 							//RECONCILIACIÓ:
-							//si coincideix amb la posició, s'elimina. Sinó, s'ha de corregir la posició del jugador.
-							//també podria ser que fos un moviment vell. Com ho tractem? Potser guardant l'últim idMove que hem tractat?
+							////Comprovem que no sigui un moviment vell:
+							//if (idMove == actualMoveID)
+							//{
+							//	
+							//}
+							//else
+							//{
+							//	
+							//}
 
-							//m_player->UpdatePosition(&pack);
-							//board.UpdateSlither(idPlayer);
+							//comprovem en quina posició estàvem / estem, i si coincideix
+							int numPos;
+							sf::Vector2f headPos;
+							pack >> numPos;
+							pack >> headPos.x;
+							pack >> headPos.y;
+							if (movesMap[idMove] != headPos)
+							{
+								std::cout << "No coincidia la posició!" << std::endl;
+
+								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
+								board.UpdateSlither(idPlayer);
+							}
+
 							accumMove = sf::Vector2f(0,0);//tornem a posar l'acumulat a 0
 
 							//esborrem els moviments anteriors posant-los a toErase
@@ -166,6 +186,7 @@ int main()
 					}
 					else
 					{
+						//interpolate!
 						playersMap[idPlayer]->UpdatePosition(&pack);
 						board.UpdateSlither(idPlayer);
 					}
@@ -269,8 +290,9 @@ void MoveSending()
 				pack.clear();
 				pack << static_cast<int>(Protocol::MOVE);
 				pack << m_player->id;
-				pack << (int)movesMap.size();//podria ser que no funcionés així
-				movesMap[(int)movesMap.size()] = accumMove;
+				pack << actualMoveID;
+				movesMap[actualMoveID] = accumMove;
+				actualMoveID++;
 				pack << accumMove.x << accumMove.y;
 
 				if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)

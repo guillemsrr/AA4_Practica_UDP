@@ -54,6 +54,28 @@ void Player::UpdatePosition(sf::Packet* pack)
 	}
 }
 
+void Player::UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Packet* pack)
+{
+	int difference = numPos - (int)bodyPositions.size();
+	if (difference > 0)
+	{
+		//add new positions, just initialized
+		for (int i = 0; i < difference; i++)
+		{
+			sf::Vector2f pos(0.f, 0.f);
+			bodyPositions.push_back(pos);
+		}
+	}
+
+	bodyPositions[0] = headPos;
+
+	for (int i = 1; i < bodyPositions.size(); i++)
+	{
+		*pack >> bodyPositions[i].x;
+		*pack >> bodyPositions[i].y;
+	}
+}
+
 
 void Player::UpdatePosition(sf::Vector2f move)
 {

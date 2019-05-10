@@ -1,7 +1,9 @@
 ﻿  ClientProxy.cpp
   ServerSource.cpp
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(51): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(267): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(268): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(50): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(273): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(274): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   Generating Code...
-  GameServer.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameServer.exe
+ServerSource.obj : error LNK2005: "float __cdecl GetRandomFloat(void)" (?GetRandomFloat@@YAMXZ) already defined in ClientProxy.obj
+GameLib.lib(PlayerInfo.obj) : error LNK2005: "float __cdecl GetRandomFloat(void)" (?GetRandomFloat@@YAMXZ) already defined in ClientProxy.obj
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameServer.exe : fatal error LNK1169: one or more multiply defined symbols found

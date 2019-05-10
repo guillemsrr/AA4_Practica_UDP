@@ -1,5 +1,8 @@
 #pragma once
 #include <random>
+#include <iostream>
+
+
 //casa Guillem
 //#define IP "192.168.1.133"
 #define IP "127.0.0.1"
@@ -10,6 +13,8 @@
 
 #define SCREEN_WIDTH 960
 #define SCREEN_HEIGHT 540
+
+#define PERCENT_PACKETLOSS 0.1f
 
 enum Protocol
 {
@@ -26,10 +31,22 @@ enum Protocol
 	FOOD_SPAWNED
 };
 
-static float GetRandomFloat()
+float GetRandomFloat()
 {
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<float> dis(0.f,1.f);
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dis(0.f,1.f);
 	return dis(gen);
+}
+
+bool RandomPacketLost()
+{
+	float f = GetRandomFloat();
+	std::cout << "random float is: " << f << std::endl;
+	if ( f < PERCENT_PACKETLOSS)
+	{
+		return true;
+	}
+
+	return false;
 }

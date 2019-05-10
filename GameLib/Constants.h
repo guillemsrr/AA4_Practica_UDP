@@ -30,23 +30,3 @@ enum Protocol
 	FOOD_EATEN,
 	FOOD_SPAWNED
 };
-
-float GetRandomFloat()
-{
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<float> dis(0.f,1.f);
-	return dis(gen);
-}
-
-bool RandomPacketLost()
-{
-	float f = GetRandomFloat();
-	std::cout << "random float is: " << f << std::endl;
-	if ( f < PERCENT_PACKETLOSS)
-	{
-		return true;
-	}
-
-	return false;
-}

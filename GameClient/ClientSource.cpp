@@ -92,6 +92,8 @@ int main()
 					}
 					received = true;
 
+					std::cout << "INITIAL POS x " << playersMap[m_player->id]->bodyPositions[0].x << " y: " << playersMap[m_player->id]->bodyPositions[0].y << std::endl;
+
 					//create the balls:
 
 				}
@@ -159,15 +161,14 @@ int main()
 							pack >> numPos;
 							pack >> headPos.x;
 							pack >> headPos.y;
+
 							if (movesMap[idMove] != headPos)
 							{
-								std::cout << "No coincidia la posició!" << std::endl;
+								std::cout << "No coincidia la posicio!" << std::endl;
 
 								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
 								board.UpdateSlither(idPlayer);
 							}
-
-							accumMove = sf::Vector2f(0,0);//tornem a posar l'acumulat a 0
 
 							//esborrem els moviments anteriors posant-los a toErase
 							for (std::map<int, sf::Vector2f>::iterator it = movesMap.begin(); it != movesMap.end(); ++it)
@@ -291,7 +292,8 @@ void MoveSending()
 				pack << static_cast<int>(Protocol::MOVE);
 				pack << m_player->id;
 				pack << actualMoveID;
-				movesMap[actualMoveID] = accumMove;
+
+				movesMap[actualMoveID] = m_player->bodyPositions[0];
 				actualMoveID++;
 				pack << accumMove.x << accumMove.y;
 
@@ -299,6 +301,8 @@ void MoveSending()
 				{
 					std::cout << "Error sending the packet" << std::endl;
 				}
+
+				accumMove = sf::Vector2f(0, 0);
 			}
 			
 			clock.restart();

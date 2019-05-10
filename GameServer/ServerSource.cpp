@@ -41,6 +41,7 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AccumMovement(sf::Packet pack);
 void MovementControl(int idPlayer, int idMove);
 void InitializeFood();
+bool RandomPacketLost();
 
 
 int main()
@@ -286,6 +287,8 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	pack.clear();
 	pack << static_cast<int>(Protocol::WELCOME);
 	newClient->AddDataToPacket(&pack);
+
+	//std::cout << "INITIAL POS x (new Client) " << newClient->bodyPositions[0].x << " y: " << newClient->bodyPositions[0].y << std::endl;
 	
 	//els altres players:
 	pack << static_cast<int>(clientProxies.size());
@@ -346,6 +349,7 @@ void AccumMovement(sf::Packet pack)
 void MovementControl(int idPlayer, int idMove)
 {
 	sf::Vector2f possiblePos = clientProxies[idPlayer]->SumToHeadPosition();
+
 	//controlar la posició
 	if (possiblePos.x < 0 || possiblePos.x > SCREEN_WIDTH || possiblePos.y < 0 || possiblePos.y > SCREEN_HEIGHT)
 	{
@@ -376,4 +380,26 @@ void MovementControl(int idPlayer, int idMove)
 void InitializeFood()
 {
 
+}
+
+float GetRandomFloat()
+{
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dis(0.f, 1.f);
+	return dis(gen);
+}
+
+bool RandomPacketLost()
+{
+	return true;
+
+	float f = GetRandomFloat();
+	std::cout << "random float is: " << f << std::endl;
+	if (f > PERCENT_PACKETLOSS)
+	{
+		return true;
+	}
+
+	return false;
 }

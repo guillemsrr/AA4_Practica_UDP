@@ -31,7 +31,7 @@ Board board;
 const float helloSendingTimer = 2.f;
 const float movementTimer = 0.1f;
 const float criticResendTimer = 2.f;
-const float interpolationTimer = 0.05f;
+const float interpolationTimer = 0.001f;
 
 //declarations:
 void HelloSending();
@@ -148,15 +148,6 @@ int main()
 						if (movesMap.find(idMove) != movesMap.end())//si existeix el idMove
 						{
 							//RECONCILIACIÓ:
-							////Comprovem que no sigui un moviment vell:
-							//if (idMove == actualMoveID)
-							//{
-							//	
-							//}
-							//else
-							//{
-							//	
-							//}
 
 							//comprovem en quina posició estàvem / estem, i si coincideix
 							int numPos;
@@ -167,7 +158,7 @@ int main()
 
 							if (movesMap[idMove] != headPos)
 							{
-								std::cout << "No coincidia la posicio!" << std::endl;
+								std::cout << "Position modified!" << std::endl;
 
 								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
 								board.UpdateSlither(idPlayer);
@@ -191,6 +182,7 @@ int main()
 					else
 					{
 						//just save the final position to interpolate!
+						//std::cout << "saved move to interpolation" << std::endl;
 						interpolationsMap[idPlayer] = playersMap[idPlayer]->GetFuturePositions(&pack);
 					}
 				}
@@ -334,17 +326,24 @@ void InterpolatePositions()
 		sf::Time t1 = clock.getElapsedTime();
 		if (t1.asSeconds() > interpolationTimer)
 		{
+			std::vector<std::map<int, std::vector<sf::Vector2f>>::iterator> toErase;//vector per eliminar després
 			for (std::map<int, std::vector<sf::Vector2f>>::iterator it = interpolationsMap.begin(); it != interpolationsMap.end(); ++it)
 			{
-				playersMap[it->first]->InterpolateTo(it->second, 0.2f);
-
-				//comparem el head:
-				//mirem que la magnitud sigui més gran i si ho és, l'eliminem del map
-				/*if (playersMap[it->first]->bodyPositions[0] - it->second[0] > 0)
+				if (playersMap[it->first]->InterpolateTo(it->second, 0.5f))
 				{
+					//std::cout << "interpolation arrived and erased" << std::endl;
+					toErase.push_back(it);
+				}
 
-				}*/
-				
+				board.UpdateSlither(it->first);
+
+				//std::cout << "interpolating" << std::endl;
+			}
+
+			while (toErase.size() != 0)
+			{
+				interpolationsMap.erase(toErase[0]);
+				toErase.erase(toErase.begin());
 			}
 
 			clock.restart();

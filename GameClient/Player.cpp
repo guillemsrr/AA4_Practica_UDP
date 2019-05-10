@@ -106,11 +106,39 @@ void Player::UpdatePosition(sf::Vector2f move)
 }
 
 
-void Player::InterpolateTo(std::vector<sf::Vector2f> finalBodyPositions, float percent)
+bool Player::InterpolateTo(std::vector<sf::Vector2f> finalBodyPositions, float percent)
 {
+	bool arrived = false;
 	for (int i = 0; i < bodyPositions.size(); i++)
 	{
-		sf::Vector2f diff = finalBodyPositions[i] - startBodyPositions[i];
-		bodyPositions[i] += percent * diff;
+		sf::Vector2f diff = finalBodyPositions[i] - startBodyPositions[i];//d'aquesta manera sempre ens mourem el mateix desplaçament
+
+		sf::Vector2f possiblePos = bodyPositions[i] + percent * diff;
+
+		//ajustem:
+		if (!arrived)
+		{
+			if (Magnitude(possiblePos) - Magnitude(finalBodyPositions[i]) <= 0.001f)//no caldria fer el mateix càlcul per cada cos
+			{
+				bodyPositions[i] = finalBodyPositions[i];
+				arrived = true;
+			}
+			else
+			{
+				bodyPositions[i] = possiblePos;
+			}
+		}
+		else
+		{
+			bodyPositions[i] = finalBodyPositions[i];
+		}
 	}
+
+	return arrived;
 }
+
+float Player::Magnitude(sf::Vector2f headPos)
+{
+	return sqrt((headPos.x * headPos.x) + (headPos.y * headPos.y));
+}
+

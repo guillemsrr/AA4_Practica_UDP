@@ -1,5 +1,4 @@
 ﻿  ClientProxy.cpp
-  CriticPack.cpp
   ServerSource.cpp
 G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(51): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
 G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(274): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data

@@ -54,6 +54,25 @@ void Player::UpdatePosition(sf::Packet* pack)
 	}
 }
 
+std::vector<sf::Vector2f> Player::GetFuturePositions(sf::Packet* pack)
+{
+	int numPos;
+	*pack >> numPos;
+	std::vector<sf::Vector2f> futureBodyPositions;
+
+	for (int i = 0; i < numPos; i++)
+	{
+		sf::Vector2f newPos;
+		*pack >> newPos.x;
+		*pack >> newPos.y;
+		futureBodyPositions.push_back(newPos);
+	}
+
+	startBodyPositions = bodyPositions;
+
+	return futureBodyPositions;
+}
+
 void Player::UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Packet* pack)
 {
 	int difference = numPos - (int)bodyPositions.size();
@@ -84,4 +103,14 @@ void Player::UpdatePosition(sf::Vector2f move)
 		bodyPositions[i] = bodyPositions[i - 1];
 	}
 	bodyPositions[0] += move;
+}
+
+
+void Player::InterpolateTo(std::vector<sf::Vector2f> finalBodyPositions, float percent)
+{
+	for (int i = 0; i < bodyPositions.size(); i++)
+	{
+		sf::Vector2f diff = finalBodyPositions[i] - startBodyPositions[i];
+		bodyPositions[i] += percent * diff;
+	}
 }

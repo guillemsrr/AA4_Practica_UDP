@@ -21,6 +21,7 @@ int actualMoveID = 0;
 std::map<int, Player*> playersMap;
 std::map<int, sf::Vector2f> movesMap;//idMove i headPos
 std::map<int, Food*> foodBallMap;
+std::map<int, std::vector<sf::Vector2f>> interpolationsMap;
 
 Player* m_player;
 sf::Vector2f accumMove;
@@ -30,13 +31,14 @@ Board board;
 const float helloSendingTimer = 2.f;
 const float movementTimer = 0.1f;
 const float criticResendTimer = 2.f;
-const float percentLostTimer = 0.05f;
+const float interpolationTimer = 0.05f;
 
 //declarations:
 void HelloSending();
 void GraphicsInterface();
 void MoveSending();
 void SendAcknowledge(int idPack);
+void InterpolatePositions();
 
 
 
@@ -51,6 +53,9 @@ int main()
 
 	std::thread accumControlThread(&MoveSending);
 	accumControlThread.detach();
+
+	std::thread interpolationsThread(&InterpolatePositions);
+	interpolationsThread.detach();
 
 	while (true)
 	{
@@ -91,8 +96,6 @@ int main()
 						playersMap[p->id] = p;
 					}
 					received = true;
-
-					std::cout << "INITIAL POS x " << playersMap[m_player->id]->bodyPositions[0].x << " y: " << playersMap[m_player->id]->bodyPositions[0].y << std::endl;
 
 					//create the balls:
 
@@ -187,9 +190,8 @@ int main()
 					}
 					else
 					{
-						//interpolate!
-						playersMap[idPlayer]->UpdatePosition(&pack);
-						board.UpdateSlither(idPlayer);
+						//just save the final position to interpolate!
+						interpolationsMap[idPlayer] = playersMap[idPlayer]->GetFuturePositions(&pack);
 					}
 				}
 					break;
@@ -308,7 +310,6 @@ void MoveSending()
 			clock.restart();
 		}
 	}
-
 }
 
 void SendAcknowledge(int idPack)
@@ -317,4 +318,36 @@ void SendAcknowledge(int idPack)
 	pack << static_cast<int>(Protocol::ACK);
 	pack << idPack;
 	sock.send(pack, IP, PORT);
+}
+
+void InterpolatePositions()
+{
+	while (!received)
+	{
+		//just don't start
+	}
+
+	sf::Clock clock;
+
+	while (true)
+	{
+		sf::Time t1 = clock.getElapsedTime();
+		if (t1.asSeconds() > interpolationTimer)
+		{
+			for (std::map<int, std::vector<sf::Vector2f>>::iterator it = interpolationsMap.begin(); it != interpolationsMap.end(); ++it)
+			{
+				playersMap[it->first]->InterpolateTo(it->second, 0.2f);
+
+				//comparem el head:
+				//mirem que la magnitud sigui més gran i si ho és, l'eliminem del map
+				/*if (playersMap[it->first]->bodyPositions[0] - it->second[0] > 0)
+				{
+
+				}*/
+				
+			}
+
+			clock.restart();
+		}
+	}
 }

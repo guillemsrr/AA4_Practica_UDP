@@ -8,6 +8,10 @@
 #include <thread>
 #include <math.h>
 #include <Food.h>
+#include "jdbc/mysql_connection.h"
+#include "jdbc/mysql_driver.h"
+#include "jdbc/cppconn/statement.h"
+#include "jdbc/cppconn/resultset.h"
 
 
 //---------SERVIDOR---------//
@@ -114,6 +118,13 @@ int main()
 			case MOVE:
 				//std::cout << "MOVE received" << std::endl;
 				AccumMovement(pack);
+				break;
+			case REGISTER:
+				std::cout << "Petición de registro recivida." << std::endl;
+
+				break;
+			case LOGIN:
+				std::cout << "Petición de login recivida." << std::endl;
 				break;
 			}
 		}

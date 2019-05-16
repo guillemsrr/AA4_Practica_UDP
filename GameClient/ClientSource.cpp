@@ -14,6 +14,8 @@
 
 sf::UdpSocket sock;
 bool received = false;
+bool startGame = false;
+bool loginOrRegister = true;
 std::mutex mtx;
 int actualMoveID = 0;
 
@@ -39,6 +41,8 @@ void GraphicsInterface();
 void MoveSending();
 void SendAcknowledge(int idPack);
 void InterpolatePositions();
+void RegisterUser();
+void LoginUser();
 
 
 
@@ -79,6 +83,9 @@ int main()
 				{
 				case WELCOME:
 				{
+					//Server confirmed us
+					received = true;
+
 					//create the player:
 					m_player = new Player(&pack);
 					m_player->color = sf::Color::Green;
@@ -86,6 +93,32 @@ int main()
 
 					std::cout << "WELCOME player "<< m_player->id << std::endl;
 
+					//Dar paso al registro y/o login
+					std::string accion;
+
+					do
+					{
+						std::cout << "Registrarse(Register) o Iniciar Sesión(Login): ";
+						std::cin >> accion;
+
+						if (accion == "Register")
+						{
+							RegisterUser();
+							loginOrRegister = false;
+						}	
+						else if (accion == "Login")
+						{
+							LoginUser();
+							loginOrRegister = false;
+						}	
+						else
+							loginOrRegister = true;
+
+
+					} while (loginOrRegister);
+					
+					//Menu principal
+					startGame=true;
 					//create the others:
 					int sizeOthers;
 					pack >> sizeOthers;
@@ -95,7 +128,7 @@ int main()
 						p->color = sf::Color::Red;
 						playersMap[p->id] = p;
 					}
-					received = true;
+					
 
 					//create the balls:
 
@@ -197,12 +230,75 @@ int main()
 					//update food map
 				}
 				break;
+				case REGISTER:
+
+					break;
+				case LOGIN:
+
+					break;
 				}
 			}
 		}
 	}
 
 	return 0;
+}
+
+void RegisterUser()
+{
+	std::string username;
+	std::string password;
+	std::string email;
+
+
+	//Recoger datos de formulario
+	std::cout << "Introduce el nombre de usuario deseado: ";
+	std::cin >> password;
+	std::cout << std::endl;
+
+	std::cout << "Introduce tu contraseña deseada: ";
+	std::cin >> password;
+	std::cout << std::endl;
+
+	std::cout << "Introduce tu email: ";
+	std::cin >> email;
+	std::cout << std::endl;
+
+	//Utilizar cabecera REGISTER, con username, password, email.
+	sf::Packet packRegister;
+	packRegister << static_cast<int>(Protocol::REGISTER);
+	packRegister << username << password << email;
+
+	//Enviar paquete a servidor cada x segundos, hasta que  me diga ok
+	if (sock.send(packRegister, IP, PORT) != sf::UdpSocket::Status::Done)
+		std::cout << "Error al enviar el registro" << std::endl;
+	else
+		std::cout << "Registro enviado" << std::endl;
+}
+
+void LoginUser()
+{
+	std::string username;
+	std::string password;
+
+	//Recoger datos de formulario
+	std::cout << "Introduce tu nombre de usuario: ";
+	std::cin >> username;
+	std::cout << std::endl;
+
+	std::cout << "Introduce tu contraseña: ";
+	std::cin >> password;
+	std::cout << std::endl;
+	//Uitlizar cabecera LOGIN, con username y password.
+	sf::Packet packetLogin;
+	packetLogin << static_cast<int>(Protocol::LOGIN);
+	packetLogin << username << password;
+
+	//Enviar paquete a servidor cada x segundos, hasta que me diga ok
+	if (sock.send(packetLogin, IP, PORT) != sf::UdpSocket::Status::Done)
+		std::cout << "Error al enviar el login" << std::endl;
+	else
+		std::cout << "Login enviado" << std::endl;
 }
 
 void HelloSending()
@@ -233,7 +329,7 @@ void HelloSending()
 
 void GraphicsInterface()
 {
-	while (!received)
+	while (!startGame)
 	{
 		//just don't start
 	}
@@ -267,7 +363,7 @@ void GraphicsInterface()
 
 void MoveSending()
 {
-	while (!received)
+	while (!startGame)
 	{
 		//just don't start
 	}
@@ -314,7 +410,7 @@ void SendAcknowledge(int idPack)
 
 void InterpolatePositions()
 {
-	while (!received)
+	while (!startGame)
 	{
 		//just don't start
 	}

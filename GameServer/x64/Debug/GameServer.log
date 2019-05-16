@@ -1,5 +1,5 @@
 ﻿  ServerSource.cpp
-c:\users\adria\desktop\aa4_practica_udp\gameserver\serversource.cpp(55): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-c:\users\adria\desktop\aa4_practica_udp\gameserver\serversource.cpp(284): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-c:\users\adria\desktop\aa4_practica_udp\gameserver\serversource.cpp(285): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-  GameServer.vcxproj -> C:\Users\adria\Desktop\AA4_Practica_UDP\x64\Debug\GameServer.exe
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(57): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(333): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(334): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+  GameServer.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameServer.exe

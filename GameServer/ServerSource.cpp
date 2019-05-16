@@ -41,6 +41,8 @@ void DisconnectionCheckerThreadFunction();
 void CriticPacketsManagerThreadFunction();
 void MovementControlThread();
 //other:
+void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack);
+void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AccumMovement(sf::Packet pack);
 void MovementControl(int idPlayer, int idMove);
@@ -97,6 +99,7 @@ int main()
 		{
 			int num;
 			pack >> num;
+		
 			switch (static_cast<Protocol>(num))
 			{
 			case HELLO:
@@ -120,11 +123,12 @@ int main()
 				AccumMovement(pack);
 				break;
 			case REGISTER:
-				std::cout << "Petición de registro recivida." << std::endl;
-
+				std::cout << "Petición de registro recibida." << std::endl;
+				AnswerRegister(ip, port, pack);
 				break;
 			case LOGIN:
-				std::cout << "Petición de login recivida." << std::endl;
+				std::cout << "Petición de login recibida." << std::endl;
+				AnswerLogin(ip, port, pack);
 				break;
 			}
 		}
@@ -255,6 +259,50 @@ void MovementControlThread()
 			clock.restart();
 		}
 	}
+}
+
+void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack)
+{
+	std::string username;
+	std::string password;
+	std::string email;
+
+	pack >> username >> password >> email;
+
+	pack.clear();
+
+	//Procesado de info del registro, consulta a la BBDD
+
+	//Respuesta a cliente
+	pack << static_cast<int>(Protocol::REGISTER);
+
+	if (sock.send(pack, ip, port) != sf::UdpSocket::Status::Done)
+		std::cout << "Error al responder al registro." << std::endl;
+	else
+		std::cout << "Devuelto el mensaje de registro a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
+
+}
+
+void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack)
+{
+	std::string username;
+	std::string password;
+
+	pack >> username >> password;
+
+	pack.clear();
+
+	//Procesado de info del login, consulta a la BBDD
+
+
+	//Respuesta a cliente
+	pack << static_cast<int>(Protocol::LOGIN);
+
+	if(sock.send(pack, ip, port) != sf::UdpSocket::Status::Done)
+		std::cout << "Error al responder al login." << std::endl;
+	else
+		std::cout << "Devuelto el mensaje de login a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
+
 }
 
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)

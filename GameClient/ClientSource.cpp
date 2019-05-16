@@ -11,10 +11,17 @@
 
 //---------CLIENTE---------//
 
+//client data:
+std::string username;
+std::string password;
+std::string email;
+
 
 sf::UdpSocket sock;
 bool received = false;
 bool startGame = false;
+bool registerResponse = false;
+bool loginResponse = false;
 bool loginOrRegister = true;
 std::mutex mtx;
 int actualMoveID = 0;
@@ -31,6 +38,7 @@ Board board;
 
 //timers:
 const float helloSendingTimer = 2.f;
+const float registerSendingTimer = 1.f;
 const float movementTimer = 0.1f;
 const float criticResendTimer = 2.f;
 const float interpolationTimer = 0.001f;
@@ -43,6 +51,7 @@ void SendAcknowledge(int idPack);
 void InterpolatePositions();
 void RegisterUser();
 void LoginUser();
+void RegisterLoginThreadFunction();
 
 
 
@@ -94,31 +103,62 @@ int main()
 					std::cout << "WELCOME player "<< m_player->id << std::endl;
 
 					//Dar paso al registro y/o login
-					std::string accion;
 
-					do
-					{
-						std::cout << "Registrarse(Register) o Iniciar Sesión(Login): ";
-						std::cin >> accion;
+					std::thread RegisterLoginThread(RegisterLoginThreadFunction);
+					RegisterLoginThread.detach();
 
-						if (accion == "Register")
-						{
-							RegisterUser();
-							loginOrRegister = false;
-						}	
-						else if (accion == "Login")
-						{
-							LoginUser();
-							loginOrRegister = false;
-						}	
-						else
-							loginOrRegister = true;
+					/*std::string accion;
+
+					std::cout << "Registrarse(Register) o Iniciar Sesión(Login): ";
+					std::cin >> accion;*/
+
+					//do
+					//{
+					//	if (accion == "Register")
+					//	{
+					//		//Recoger datos de formulario
+					//		std::cout << "Introduce el nombre de usuario deseado: ";
+					//		std::cin >> password;
+					//		std::cout << std::endl;
+
+					//		std::cout << "Introduce tu contraseña deseada: ";
+					//		std::cin >> password;
+					//		std::cout << std::endl;
+
+					//		std::cout << "Introduce tu email: ";
+					//		std::cin >> email;
+					//		std::cout << std::endl;
+
+					//		//RegisterUser();
+					//		//Crear thread para enviar cada x ms la petición de registro hacia el servidor
+					//		std::thread registerThread(RegisterUser);
+					//		registerThread.detach();
+					//		registerResponse = false;
+					//	}	
+					//	else if (accion == "Login")
+					//	{
+					//		//Recoger datos de formulario
+					//		std::cout << "Introduce el nombre de usuario deseado: ";
+					//		std::cin >> password;
+					//		std::cout << std::endl;
+
+					//		std::cout << "Introduce tu contraseña deseada: ";
+					//		std::cin >> password;
+					//		std::cout << std::endl;
+
+					//		LoginUser();
+					//	}	
+					//	else
+					//	{
+					//		loginOrRegister = true;							
+					//	}
+					//		
 
 
-					} while (loginOrRegister);
+					//} while (loginOrRegister);
 					
 					//Menu principal
-					startGame=true;
+					//startGame=true;
 					//create the others:
 					int sizeOthers;
 					pack >> sizeOthers;
@@ -231,10 +271,12 @@ int main()
 				}
 				break;
 				case REGISTER:
-
+					std::cout << "Recibo confirmacion del registro" << std::endl;
+					registerResponse = true;
 					break;
 				case LOGIN:
-
+					std::cout << "Recibo confirmacion del login" << std::endl;
+					loginResponse = true;
 					break;
 				}
 			}
@@ -244,61 +286,125 @@ int main()
 	return 0;
 }
 
+void RegisterLoginThreadFunction()
+{
+	std::string accion;
+
+	do
+	{
+
+		std::cout << "Registrarse(Register) o Iniciar Sesión(Login): ";
+		std::cin >> accion;
+
+		if (accion == "Register")
+		{
+			//Recoger datos de formulario
+			std::cout << "Introduce el nombre de usuario deseado: ";
+			std::cin >> password;
+			std::cout << std::endl;
+
+			std::cout << "Introduce tu contraseña deseada: ";
+			std::cin >> password;
+			std::cout << std::endl;
+
+			std::cout << "Introduce tu email: ";
+			std::cin >> email;
+			std::cout << std::endl;
+
+			//loginOrRegister = false;
+
+			RegisterUser();
+		}
+		else if (accion == "Login")
+		{
+			//Recoger datos de formulario
+			std::cout << "Introduce el nombre de usuario deseado: ";
+			std::cin >> password;
+			std::cout << std::endl;
+
+			std::cout << "Introduce tu contraseña deseada: ";
+			std::cin >> password;
+			std::cout << std::endl;
+
+			//loginOrRegister = false;
+
+			LoginUser();
+		}
+		else
+		{
+			loginOrRegister = true;
+		}
+
+
+
+	} while (loginOrRegister);
+
+
+	//Menu principal
+	startGame = true;
+}
+
 void RegisterUser()
 {
-	std::string username;
-	std::string password;
-	std::string email;
 
-
-	//Recoger datos de formulario
-	std::cout << "Introduce el nombre de usuario deseado: ";
-	std::cin >> password;
-	std::cout << std::endl;
-
-	std::cout << "Introduce tu contraseña deseada: ";
-	std::cin >> password;
-	std::cout << std::endl;
-
-	std::cout << "Introduce tu email: ";
-	std::cin >> email;
-	std::cout << std::endl;
+	sf::Clock clock;
+	
 
 	//Utilizar cabecera REGISTER, con username, password, email.
 	sf::Packet packRegister;
 	packRegister << static_cast<int>(Protocol::REGISTER);
 	packRegister << username << password << email;
 
-	//Enviar paquete a servidor cada x segundos, hasta que  me diga ok
-	if (sock.send(packRegister, IP, PORT) != sf::UdpSocket::Status::Done)
-		std::cout << "Error al enviar el registro" << std::endl;
-	else
-		std::cout << "Registro enviado" << std::endl;
+	while (!loginResponse)
+	{
+		sf::Time t1 = clock.getElapsedTime();
+		if (t1.asSeconds() > helloSendingTimer)
+		{
+			//Enviar paquete a servidor cada x segundos, hasta que  me diga ok
+			if (sock.send(packRegister, IP, PORT) != sf::UdpSocket::Status::Done)
+				std::cout << "Error al enviar el registro" << std::endl;
+			else
+				std::cout << "Registro enviado" << std::endl;
+
+
+			clock.restart();
+		}
+		
+	}
+
+	loginOrRegister = false;
+	
 }
 
 void LoginUser()
 {
-	std::string username;
-	std::string password;
 
-	//Recoger datos de formulario
-	std::cout << "Introduce tu nombre de usuario: ";
-	std::cin >> username;
-	std::cout << std::endl;
+	sf::Clock clock;
 
-	std::cout << "Introduce tu contraseña: ";
-	std::cin >> password;
-	std::cout << std::endl;
-	//Uitlizar cabecera LOGIN, con username y password.
+	//Utilizar cabecera LOGIN con username y password.
 	sf::Packet packetLogin;
 	packetLogin << static_cast<int>(Protocol::LOGIN);
 	packetLogin << username << password;
 
-	//Enviar paquete a servidor cada x segundos, hasta que me diga ok
-	if (sock.send(packetLogin, IP, PORT) != sf::UdpSocket::Status::Done)
-		std::cout << "Error al enviar el login" << std::endl;
-	else
-		std::cout << "Login enviado" << std::endl;
+	while (!loginResponse)
+	{
+
+		sf::Time t1 = clock.getElapsedTime();
+		if (t1.asSeconds() > helloSendingTimer)
+		{
+			//Enviar paquete a servidor cada x segundos, hasta que me diga ok
+			if (sock.send(packetLogin, IP, PORT) != sf::UdpSocket::Status::Done)
+				std::cout << "Error al enviar el login" << std::endl;
+			else
+				std::cout << "Login enviado" << std::endl;
+
+
+			clock.restart();
+		}
+		
+	}
+
+	loginOrRegister = false;
 }
 
 void HelloSending()

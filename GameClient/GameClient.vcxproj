@@ -155,12 +155,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
+    <ClCompile Include="FoodBall.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Slither.cpp" />
-    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="ClientSource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Board.h" />
+    <ClInclude Include="FoodBall.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Slither.h" />
   </ItemGroup>

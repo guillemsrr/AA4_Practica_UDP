@@ -27,6 +27,6 @@ public:
 	int lastIdMove;
 
 private:
-	const float separation = 15.0f;
+	const float separation = 10.0f;
 };
 

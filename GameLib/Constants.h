@@ -1,5 +1,8 @@
 #pragma once
 #include <random>
+#include <iostream>
+
+
 //casa Guillem
 //#define IP "192.168.1.133"
 #define IP "127.0.0.1"
@@ -11,6 +14,8 @@
 #define SCREEN_WIDTH 960
 #define SCREEN_HEIGHT 540
 
+#define PERCENT_PACKETLOSS 0.1f
+
 enum Protocol
 {
 	HELLO,
@@ -21,13 +26,7 @@ enum Protocol
 	PONG,
 	CMD,
 	DISCONNECTED,
-	MOVE
+	MOVE,
+	FOOD_EATEN,
+	FOOD_SPAWNED
 };
-
-static float GetRandomFloat()
-{
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<float> dis(0.f,1.f);
-	return dis(gen);
-}

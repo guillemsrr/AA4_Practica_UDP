@@ -1,3 +1,6 @@
-﻿  ClientSource.cpp
-  LINK : G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameClient.exe not found or not built by the last incremental link; performing full link
+﻿  Board.cpp
+  ClientSource.cpp
+  Player.cpp
+  Slither.cpp
+  Generating Code...
   GameClient.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameClient.exe

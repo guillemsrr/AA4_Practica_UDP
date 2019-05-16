@@ -1,7 +1,15 @@
-﻿  ClientProxy.cpp
-  ServerSource.cpp
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(51): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(274): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(275): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-  Generating Code...
+﻿  ServerSource.cpp
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(55): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(327): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(328): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(450): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameServer\ServerSource.cpp(451): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
   GameServer.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameServer.exe

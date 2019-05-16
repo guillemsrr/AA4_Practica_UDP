@@ -46,7 +46,18 @@ void Board::DrawBoard()
 		}
 	}
 
+	//paint foodballs:
+	for (std::map<int, FoodBall*>::iterator it = foodBallMap.begin(); it != foodBallMap.end(); ++it)
+	{
+		window.draw(it->second->circleShape);
+	}
+
 	window.display();
+}
+
+void Board::DrawFood(sf::CircleShape ball)
+{
+	window.draw(ball);
 }
 
 void Board::Commands(Player* player)

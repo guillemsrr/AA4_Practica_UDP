@@ -20,7 +20,7 @@ int actualMoveID = 0;
 //maps:
 std::map<int, Player*> playersMap;
 std::map<int, sf::Vector2f> movesMap;//idMove i headPos
-std::map<int, Food*> foodBallMap;
+std::map<int, FoodBall*> foodBallMap;
 std::map<int, std::vector<sf::Vector2f>> interpolationsMap;
 
 Player* m_player;
@@ -95,10 +95,25 @@ int main()
 						p->color = sf::Color::Red;
 						playersMap[p->id] = p;
 					}
-					received = true;
 
 					//create the balls:
+					int numFood;
+					pack >> numFood;
+					std::cout << "num balls: " << numFood << std::endl;
 
+					for (int i = 0; i < numFood; i++)
+					{
+						int id;
+						sf::Vector2f pos;
+						pack >> id;
+						pack >> pos.x;
+						pack >> pos.y;
+						foodBallMap[id] = new FoodBall(id, pos);
+					}
+
+					board.foodBallMap = foodBallMap;//això s'hauria de millorar..
+
+					received = true;
 				}
 					break;
 				case NEW_PLAYER:
@@ -187,15 +202,37 @@ int main()
 					}
 				}
 					break;
-				case FOOD_EATEN:
+				case FOOD_UPDATE:
 				{
+					if (!received)
+					{
+						break;
+					}
+
+					std::lock_guard<std::mutex> guard(mtx);
+
 					//update food map
+					//create the balls:
+					int numFood;
+					pack >> numFood;
+					std::cout << "num balls: " << numFood << std::endl;
+
+					foodBallMap.clear();//easy però no és òptim
+					board.foodBallMap.clear();
+
+					for (int i = 0; i < numFood; i++)
+					{
+						int id;
+						sf::Vector2f pos;
+						pack >> id;
+						pack >> pos.x;
+						pack >> pos.y;
+						foodBallMap[id] = new FoodBall(id, pos);
+					}
+
+					board.foodBallMap = foodBallMap;//això s'hauria de millorar..
 				}
 					break;
-				case FOOD_SPAWNED:
-				{
-					//update food map
-				}
 				break;
 				}
 			}
@@ -252,6 +289,8 @@ void GraphicsInterface()
 	board.window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Slither Remake");
 	while (board.window.isOpen())
 	{
+		std::lock_guard<std::mutex> guard(mtx);
+
 		board.DrawBoard();
 		board.Commands(m_player);
 		accumMove += board.playerMovement;
@@ -261,6 +300,13 @@ void GraphicsInterface()
 		{
 			m_player->UpdatePosition(board.playerMovement);
 			board.UpdateSlither(m_player->id);
+		}
+
+		//draw foodballs:
+		
+		for (std::map<int, FoodBall*>::iterator it = foodBallMap.begin(); it != foodBallMap.end(); ++it)
+		{
+			board.DrawFood(it->second->circleShape);
 		}
 	}
 }

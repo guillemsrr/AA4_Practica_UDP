@@ -8,6 +8,7 @@
 #include <Constants.h>
 #include "Player.h"
 #include "Slither.h"
+#include "FoodBall.h"
 
 
 class Board
@@ -20,10 +21,12 @@ public:
 	void UpdateSlither(int id);
 	void UpdateSlithers();
 	void DrawBoard();
+	void DrawFood(sf::CircleShape food);
 	void Commands(Player* player);
 	sf::RenderWindow window;
 	sf::Vector2f playerMovement;
 	std::map<int, Slither*> slithersMap;//key is idPlayer
+	std::map<int, FoodBall*> foodBallMap;
 
 private:
 	const float pixelsMove = 5.0f;

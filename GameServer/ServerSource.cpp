@@ -8,10 +8,11 @@
 #include <thread>
 #include <math.h>
 #include <Food.h>
-#include "jdbc/mysql_connection.h"
-#include "jdbc/mysql_driver.h"
-#include "jdbc/cppconn/statement.h"
-#include "jdbc/cppconn/resultset.h"
+#include <jdbc/mysql_connection.h>
+#include <jdbc/mysql_driver.h>
+#include <jdbc/cppconn/statement.h>
+#include <jdbc/cppconn/resultset.h>
+#include <jdbc/cppconn/prepared_statement.h>
 
 
 //---------SERVIDOR---------//
@@ -33,6 +34,9 @@ const float disconnectTimer = 10.f;
 const float maxUnoperativeTime = 30.f;
 const float serverUpdateTimer = 0.05f;//?¿?¿
 
+
+//connection BBDD
+//sql::Connection* conn;
 
 //declarations:
 //threads:
@@ -272,6 +276,15 @@ void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	pack.clear();
 
 	//Procesado de info del registro, consulta a la BBDD
+	sql::Driver* driver = sql::mysql::get_driver_instance();
+	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+	conn->setSchema("slitherudp");
+
+	sql::Statement* stmt = conn->createStatement();
+	sql::ResultSet* res = stmt->executeQuery("SELECT count(*) from Usuarios");
+	res->next();
+	int cuantos = res->getInt(1);
+	std::cout << "Hay " << cuantos << " registros en la tabla Usuarios" << std::endl;
 
 	//Respuesta a cliente
 	pack << static_cast<int>(Protocol::REGISTER);

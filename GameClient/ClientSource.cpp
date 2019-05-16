@@ -107,58 +107,9 @@ int main()
 					std::thread RegisterLoginThread(RegisterLoginThreadFunction);
 					RegisterLoginThread.detach();
 
-					/*std::string accion;
 
-					std::cout << "Registrarse(Register) o Iniciar Sesión(Login): ";
-					std::cin >> accion;*/
+					//ESTO DEBERIA IR DESPUES DEL LOGIN SI O SI
 
-					//do
-					//{
-					//	if (accion == "Register")
-					//	{
-					//		//Recoger datos de formulario
-					//		std::cout << "Introduce el nombre de usuario deseado: ";
-					//		std::cin >> password;
-					//		std::cout << std::endl;
-
-					//		std::cout << "Introduce tu contraseña deseada: ";
-					//		std::cin >> password;
-					//		std::cout << std::endl;
-
-					//		std::cout << "Introduce tu email: ";
-					//		std::cin >> email;
-					//		std::cout << std::endl;
-
-					//		//RegisterUser();
-					//		//Crear thread para enviar cada x ms la petición de registro hacia el servidor
-					//		std::thread registerThread(RegisterUser);
-					//		registerThread.detach();
-					//		registerResponse = false;
-					//	}	
-					//	else if (accion == "Login")
-					//	{
-					//		//Recoger datos de formulario
-					//		std::cout << "Introduce el nombre de usuario deseado: ";
-					//		std::cin >> password;
-					//		std::cout << std::endl;
-
-					//		std::cout << "Introduce tu contraseña deseada: ";
-					//		std::cin >> password;
-					//		std::cout << std::endl;
-
-					//		LoginUser();
-					//	}	
-					//	else
-					//	{
-					//		loginOrRegister = true;							
-					//	}
-					//		
-
-
-					//} while (loginOrRegister);
-					
-					//Menu principal
-					//startGame=true;
 					//create the others:
 					int sizeOthers;
 					pack >> sizeOthers;
@@ -171,6 +122,8 @@ int main()
 					
 
 					//create the balls:
+
+					//--------------------------------------//
 
 				}
 					break;
@@ -332,7 +285,7 @@ void RegisterLoginThreadFunction()
 		}
 		else
 		{
-			loginOrRegister = true;
+			//loginOrRegister = true;
 		}
 
 
@@ -355,7 +308,7 @@ void RegisterUser()
 	packRegister << static_cast<int>(Protocol::REGISTER);
 	packRegister << username << password << email;
 
-	while (!loginResponse)
+	while (!registerResponse)
 	{
 		sf::Time t1 = clock.getElapsedTime();
 		if (t1.asSeconds() > helloSendingTimer)

@@ -276,23 +276,106 @@ void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	pack.clear();
 
 	//Procesado de info del registro, consulta a la BBDD
+
+	///1-Revisar que la info sea correcta
 	sql::Driver* driver = sql::mysql::get_driver_instance();
 	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
 	conn->setSchema("slitherudp");
 
-	sql::Statement* stmt = conn->createStatement();
-	sql::ResultSet* res = stmt->executeQuery("SELECT count(*) from Usuarios");
-	res->next();
-	int cuantos = res->getInt(1);
-	std::cout << "Hay " << cuantos << " registros en la tabla Usuarios" << std::endl;
+	std::cout << "Voy a procesar los datos del cliente, usuario: " << username << ", password: " << password << ", email: " << email << std::endl;
+
+	sql::SQLString usernameBBDD = username.c_str();
+	sql::SQLString emailBBDD = email.c_str();
+	sql::SQLString passwordBBDD = password.c_str();
+
+	sql::PreparedStatement* pstmt;
+	sql::ResultSet* res;
+
+	///2-Mirar en base de datos si ya existe el correo o el username
+
+	int usernameCoincidence = 0;
+	int emailCoincidence = 0;
+
+
+
+	pstmt = conn->prepareStatement("SELECT count(*) FROM Usuarios WHERE Username=?");
+	pstmt->setString(1, usernameBBDD);
+	pstmt->execute();
+
+	do
+	{
+		res = pstmt->getResultSet();
+
+		while (res->next())
+		{
+			usernameCoincidence = res->getInt(1);
+			std::cout << "Resultado de buscar el username: " << res->getInt(1) << std::endl;
+		}
+
+	} while (pstmt->getMoreResults());
+
+
+
+	pstmt = conn->prepareStatement("SELECT count(*) FROM Usuarios WHERE Email=?");
+	pstmt->setString(1, usernameBBDD);
+	pstmt->execute();
+	
+
+
+	do
+	{
+		res = pstmt->getResultSet();
+
+		while (res->next())
+		{
+			emailCoincidence = res->getInt(1);
+			std::cout << "Resultado de buscar el email: " << res->getInt(1) << std::endl;
+		}
+
+	} while (pstmt->getMoreResults());
+
+	///3-Hacer registro
+
+	int errorCode = 0;
+	/*
+	ESTE ERROR CODE TIENE LAS SIGUIENTES OPCIONES:
+		0 - Registro OK
+		1 - Usuario o email ya registrados	
+	*/
+
+
+	if (usernameCoincidence > 0 || emailCoincidence > 0)
+	{
+		//Devolver a cliente código de error usuario o email ya existen
+		errorCode = 1;
+	}
+	else
+	{
+		//Registrar al usuario
+		delete pstmt;
+		delete res;
+
+		pstmt = conn->prepareStatement("INSERT INTO Usuarios(Username, Pasword, Email, Dinero) VALUES(?, ?, ?, ?)");
+		pstmt->setString(1, usernameBBDD);
+		pstmt->setString(2, passwordBBDD);
+		pstmt->setString(3, emailBBDD);
+		pstmt->setInt(4, 0);
+		pstmt->executeUpdate();
+	}
+
+
+	///4-Recoger y devolver codigo de error
 
 	//Respuesta a cliente
 	pack << static_cast<int>(Protocol::REGISTER);
+	pack << errorCode;
 
 	if (sock.send(pack, ip, port) != sf::UdpSocket::Status::Done)
 		std::cout << "Error al responder al registro." << std::endl;
 	else
 		std::cout << "Devuelto el mensaje de registro a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
+
+	conn->close();
 
 }
 
@@ -306,15 +389,56 @@ void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	pack.clear();
 
 	//Procesado de info del login, consulta a la BBDD
+	sql::Driver* driver = sql::mysql::get_driver_instance();
+	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+	conn->setSchema("slitherudp");
+
+	std::cout << "Voy a procesar los datos del cliente, usuario: " << username << ", password: " << password << std::endl;
+
+	sql::SQLString usernameBBDD = username.c_str();
+	sql::SQLString passwordBBDD = password.c_str();
+
+	sql::PreparedStatement* pstmt;
+	sql::ResultSet* res;
+
+	pstmt = conn->prepareStatement("SELECT count(*) FROM Usuarios WHERE Username=? AND Pasword=?");
+	pstmt->setString(1, usernameBBDD);
+	pstmt->setString(2, passwordBBDD);
+	pstmt->execute();
+
+	int loginCoincidence = 0;
+
+	do
+	{
+		res = pstmt->getResultSet();
+
+		while (res->next())
+		{
+			loginCoincidence = res->getInt(1);
+			std::cout << "Resultado de consultar el inicio de sesion: " << res->getInt(1) << std::endl;
+		}
+
+	} while (pstmt->getMoreResults());
+
+
+	if (loginCoincidence > 0)
+	{
+		//El cliente ha iniciado sesión
+	}
 
 
 	//Respuesta a cliente
 	pack << static_cast<int>(Protocol::LOGIN);
+	pack << loginCoincidence;
+
+
 
 	if(sock.send(pack, ip, port) != sf::UdpSocket::Status::Done)
 		std::cout << "Error al responder al login." << std::endl;
 	else
 		std::cout << "Devuelto el mensaje de login a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
+
+	conn->close();
 
 }
 

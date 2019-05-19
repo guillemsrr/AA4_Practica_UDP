@@ -23,6 +23,8 @@ bool startGame = false;
 bool registerResponse = false;
 bool loginResponse = false;
 bool loginOrRegister = true;
+int codigoRegistro = 0;
+int codigoLogin = 0;
 std::mutex mtx;
 int actualMoveID = 0;
 
@@ -224,11 +226,16 @@ int main()
 				}
 				break;
 				case REGISTER:
-					std::cout << "Recibo confirmacion del registro" << std::endl;
+					pack >> codigoRegistro;
+
+					std::cout << "Recibo confirmacion del registro con codigo: " << codigoRegistro << std::endl;
+
 					registerResponse = true;
 					break;
 				case LOGIN:
-					std::cout << "Recibo confirmacion del login" << std::endl;
+
+					pack >> codigoLogin;
+					std::cout << "Recibo confirmacion del login con codigo:" << codigoLogin << std::endl;
 					loginResponse = true;
 					break;
 				}
@@ -253,7 +260,7 @@ void RegisterLoginThreadFunction()
 		{
 			//Recoger datos de formulario
 			std::cout << "Introduce el nombre de usuario deseado: ";
-			std::cin >> password;
+			std::cin >> username;
 			std::cout << std::endl;
 
 			std::cout << "Introduce tu contraseña deseada: ";
@@ -272,7 +279,7 @@ void RegisterLoginThreadFunction()
 		{
 			//Recoger datos de formulario
 			std::cout << "Introduce el nombre de usuario deseado: ";
-			std::cin >> password;
+			std::cin >> username;
 			std::cout << std::endl;
 
 			std::cout << "Introduce tu contraseña deseada: ";

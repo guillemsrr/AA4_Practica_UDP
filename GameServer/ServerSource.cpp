@@ -47,6 +47,9 @@ void MovementControlThread();
 //other:
 void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack);
+void GetPlayeBBDDInfo(int idPlayer);
+void UpdatePlayerBBDDInfo(int idPlayer);
+void ComputeMMRFromPlayer(int idPlayer);
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AccumMovement(sf::Packet pack);
 void MovementControl(int idPlayer, int idMove);
@@ -439,6 +442,48 @@ void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		std::cout << "Devuelto el mensaje de login a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
 
 	conn->close();
+
+}
+
+void GetPlayeBBDDInfo(int idPlayer)
+{
+	/*Crear consultas a BBDD con id de player y sacar todos sus stats:
+
+	Informacion a sacar(Para el matchmaking):
+		-Numero de partidas jugadas
+		-Numero de partidas ganadas
+		-Cantidad de muertes totales
+	*/
+
+	//1-Consultar datos usuario
+
+	//2-Consultar datos partidas usuarios
+
+	//3-LLamar a función de MMR
+
+}
+
+void UpdatePlayerBBDDInfo(int idPlayer)
+{
+	/*Actualizar los datos del usuario a postpartida
+		-Actualizar la partida que acaba de jugar/crearla
+		-Actualizar tamaño, muertes, etc	
+	*/
+
+	//1-Consultas de update de la base de datos
+
+}
+
+void ComputeMMRFromPlayer(int idPlayer)
+{
+	/*Computar el MMR del usuario
+		MMR1=((NumVictorias/NumPartidasJugadas)*80)+(NumMuertesTotales*20);				+-5/+-10 para encontrar partida sería lo óptimo pero dada la esasez de jugadores para testear simplemente ordenarlos
+	*/
+
+
+	//1-Calcular el MMR del usuario indicado
+
+	//2-Actualizar su valor de MMR en la clase ClientProxy
 
 }
 

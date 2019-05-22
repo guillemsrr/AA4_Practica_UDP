@@ -17,6 +17,7 @@ public:
 	Board();
 	~Board();
 	
+
 	void InitializeSlither(Player* player);
 	void UpdateSlither(int id);
 	void UpdateSlithers();
@@ -29,6 +30,6 @@ public:
 	std::map<int, FoodBall*> foodBallMap;
 
 private:
-	const float pixelsMove = 5.0f;
+	sf::Clock frameTimeClock;
 };
 

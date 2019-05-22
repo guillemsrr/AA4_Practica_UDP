@@ -16,6 +16,19 @@ ClientProxy::~ClientProxy()
 {
 }
 
+float Distance2(sf::Vector2f v1, sf::Vector2f v2)
+{
+	sf::Vector2f v = v2 - v1;
+	return sqrt(v.x*v.x + v.y*v.y);
+}
+
+void Normalize(sf::Vector2f& vec)
+{
+	sf::Vector2f zero = sf::Vector2f(0.f, 0.f);
+	float dist = Distance2(vec, zero);
+	vec /= dist;
+}
+
 void ClientProxy::CreateInitialBodyPositions(sf::Vector2f headPos)
 {
 	bodyPositions.push_back(headPos);
@@ -61,11 +74,20 @@ void ClientProxy::CreateBodyPosition()
 
 void ClientProxy::UpdatePosition(sf::Vector2f headPos)
 {
-	for (int i = (int)bodyPositions.size() - 1; i > 0; i--)
+	bodyPositions[0] = headPos;
+
+	for (int i = 1; i < (int)bodyPositions.size() ; i++)
+	{
+		sf::Vector2f dir = bodyPositions[i] - bodyPositions[i - 1];
+		Normalize(dir);
+		bodyPositions[i] = bodyPositions[i - 1] + dir * separation;
+	}
+
+	/*for (int i = (int)bodyPositions.size() - 1; i > 0; i--)
 	{
 		bodyPositions[i] = bodyPositions[i - 1];
 	}
-	bodyPositions[0] = headPos;
+	bodyPositions[0] = headPos;*/
 
 	accumMovement = sf::Vector2f(0,0);
 }

@@ -22,15 +22,6 @@ std::map<int, ClientProxy*> clientProxies;
 std::map<int, CriticPack*> criticPackets;
 std::map<int, Food*> foodMap;
 
-//timers:
-const float criticPacketsTimer = 10.0f;
-const float pingTimer = 5.0f;
-const float percentLostTimer = 0.05f;
-const float disconnectTimer = 10.f;
-const float maxUnoperativeTime = 30.f;
-const float movementUpdateTimer = 0.05f;//?¿?¿
-const float foodUpdateTimer = 0.25f;//?¿?¿
-
 
 //declarations:
 //threads:
@@ -81,8 +72,8 @@ int main()
 	InitializeFood();
 
 	//Thread de validació de moviment
-	std::thread foodUpdateThread(&FoodUpdateThread);
-	foodUpdateThread.detach();
+	//std::thread foodUpdateThread(&FoodUpdateThread);
+	//foodUpdateThread.detach();
 
 	#pragma endregion
 
@@ -144,7 +135,7 @@ void PingThreadFunction()
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > pingTimer)
+		if (t1.asSeconds() > PINGTIMER)
 		{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
@@ -171,13 +162,13 @@ void DisconnectionCheckerThreadFunction()
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > disconnectTimer)
+		if (t1.asSeconds() > DISCONNECTTIMER)
 		{
 			//std::cout << "Checking for disconnected players" << std::endl;
 			//Comprobar si el numPings supera el límite y enviar el DISCONNECTED a todos los demás clientes
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); /*++it*/)
 			{
-				if (it->second->numPings >= maxUnoperativeTime)
+				if (it->second->numPings >= MAXUNOPERATIVETIMER)
 				{
 					//Añadir el paquete a la lista de críticos
 					pack << static_cast<int>(Protocol::DISCONNECTED);
@@ -218,7 +209,7 @@ void CriticPacketsManagerThreadFunction()
 	{
 		sf::Time t1 = clock.getElapsedTime();
 
-		if (t1.asSeconds() > criticPacketsTimer)
+		if (t1.asSeconds() > CRITICPACKETSTIMER)
 		{
 			for (std::map<int, CriticPack*>::iterator it = criticPackets.begin(); it != criticPackets.end(); ++it)
 			{
@@ -240,7 +231,7 @@ void MovementControlThread()
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > movementUpdateTimer)
+		if (t1.asSeconds() > MOVEMENTUPDATETIMER)
 		{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
@@ -262,7 +253,7 @@ void FoodUpdateThread()
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > foodUpdateTimer)
+		if (t1.asSeconds() > FOODUPDATETIMER)
 		{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{

@@ -65,11 +65,6 @@ void Board::DrawBoard()
 	window.display();
 }
 
-void Board::DrawFood(sf::CircleShape ball)
-{
-	window.draw(ball);
-}
-
 void Board::Commands(Player* player)
 {
 	float deltaTime = frameTimeClock.getElapsedTime().asSeconds();

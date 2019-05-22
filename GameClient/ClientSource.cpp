@@ -172,11 +172,24 @@ int main()
 							pack >> headPos.y;
 
 							if (movesMap[idMove] != headPos)
+							//if (((int)movesMap[idMove].x != (int)headPos.x) || ((int)movesMap[idMove].y != (int)headPos.y))
 							{
 								std::cout << "Position modified!" << std::endl;
+								bool x = (float)movesMap[idMove].x != (float)headPos.x;
+								bool y = ((float)movesMap[idMove].y != (float)headPos.y);
+								std::cout << "x bool: " << x << std::endl;
+								std::cout << "y bool: " << y << std::endl;
+								//std::cout << "headPos: (x "<< headPos.x << " , y " << headPos.y << std::endl;
+								//std::cout << "movesMap[idMove]: (x "<< movesMap[idMove].x << " , y " << movesMap[idMove].y << std::endl;
+								std::cout << "movesMap y: "<< movesMap[idMove].y << " head pos y " << headPos.y << std::endl;
 
-								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
-								board.UpdateSlither(idPlayer);
+								//m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
+								//board.UpdateSlither(idPlayer);
+								//accumMove = sf::Vector2f();
+							}
+							else
+							{
+								std::cout << "good position" << std::endl;
 							}
 
 							//esborrem els moviments anteriors posant-los a toErase
@@ -191,6 +204,7 @@ int main()
 							{
 								movesMap.erase(toErase[0]);
 								toErase.erase(toErase.begin());
+								std::cout << "erasing" << std::endl;
 							}
 						}
 					}
@@ -212,7 +226,7 @@ int main()
 					std::lock_guard<std::mutex> guard(mtx);
 
 					//update food map
-					//create the balls:
+
 					int numFood;
 					pack >> numFood;
 					//std::cout << "num balls: " << numFood << std::endl;
@@ -227,6 +241,7 @@ int main()
 					}
 
 					board.foodPositions = foodPositions;
+					//std::cout << "foodPositions size: " << foodPositions.size() << std::endl;
 				}
 					break;
 				break;
@@ -292,17 +307,11 @@ void GraphicsInterface()
 		accumMove += board.playerMovement;
 
 		////prediction movement:
-		//if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
-		//{
-		//	m_player->UpdatePosition(board.playerMovement);
-		//	board.UpdateSlither(m_player->id);
-		//}
-
-		//draw foodballs:
-		/*for (std::map<int, FoodBall*>::iterator it = foodBallMap.begin(); it != foodBallMap.end(); ++it)
+		if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
 		{
-			board.DrawFood(it->second->circleShape);
-		}*/
+			m_player->UpdatePosition(board.playerMovement);
+			board.UpdateSlither(m_player->id);
+		}
 	}
 }
 

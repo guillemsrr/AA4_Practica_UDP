@@ -72,8 +72,8 @@ int main()
 	InitializeFood();
 
 	//Thread de food
-	std::thread foodUpdateThread(&FoodUpdateThread);
-	foodUpdateThread.detach();
+	//std::thread foodUpdateThread(&FoodUpdateThread);
+	//foodUpdateThread.detach();
 
 	#pragma endregion
 
@@ -275,7 +275,7 @@ void FoodUpdateThread()
 				for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
 				{
 					Food* food = *closeit;
-					pack << food->id;
+					//pack << food->id;
 					pack << food->position.x;
 					pack << food->position.y;
 					//pack << food->color; //no puc passar el color?
@@ -365,7 +365,6 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		//pack << food->color; //no puc passar el color?
 	}
 
-
 	sock.send(pack, ip, port);
 
 	//Enviar NEW_PLAYER a todos los demás clientes
@@ -397,7 +396,7 @@ void AccumMovement(sf::Packet pack)
 	sf::Vector2f sumPos;
 	pack >> sumPos.x >> sumPos.y;
 
-	clientProxies[idPlayer]->accumMovement += sumPos;//en comptes de tractar-lo directament, l'acumulo i es tractarà en el thread
+	clientProxies[idPlayer]->accumMovement += sumPos;//en comptes de tractar-lo directament, l'acumulo i es tractarà en el thread de moviment
 	clientProxies[idPlayer]->lastIdMove = idMove;
 }
 
@@ -419,7 +418,7 @@ void FoodCollisionCheck(std::vector<sf::Vector2f> playerPositions, float playerB
 		if (/*Collision*/collided)
 		{
 			//Food eaten
-			foodVector.erase(foodVector.begin() + i);
+			foodVector.erase(foodVector.begin() + i);//comprovar que funcioni
 		}
 		else
 		{
@@ -458,7 +457,7 @@ void MovementControl(int idPlayer, int idMove)
 		sock.send(pack, it->second->ip, it->second->port);
 	}
 
-	FoodCollisionCheck(clientProxies[idPlayer]->bodyPositions, 13.f);
+	FoodCollisionCheck(clientProxies[idPlayer]->bodyPositions, 13.f);//13 provisional
 }
 
 void InitializeFood()

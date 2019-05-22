@@ -47,6 +47,7 @@ void MovementControlThread();
 //other:
 void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack);
+void SetPlayerSesion(int idPlayer);
 void GetPlayeBBDDInfo(int idPlayer);
 void UpdatePlayerBBDDInfo(int idPlayer);
 void ComputeMMRFromPlayer(int idPlayer);
@@ -384,62 +385,110 @@ void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 
 void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 {
-	std::string username;
-	std::string password;
+	//Comprobar si el clientProxy con Ip dada ya se esta intentando logear
+	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+	{
+		if (it->second->ip == ip && it->second->port == port)
+		{
+			if (it->second->isLogging==false && it->second->isLogged==false)
+			{
+				it->second->isLogging = true;
 
-	pack >> username >> password;
+				std::string username;
+				std::string password;
 
-	pack.clear();
+				pack >> username >> password;
 
-	//Procesado de info del login, consulta a la BBDD
+				pack.clear();
+
+				//Procesado de info del login, consulta a la BBDD
+				sql::Driver* driver = sql::mysql::get_driver_instance();
+				sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+				conn->setSchema("slitherudp");
+
+				std::cout << "Voy a procesar los datos del cliente, usuario: " << username << ", password: " << password << std::endl;
+
+				sql::SQLString usernameBBDD = username.c_str();
+				sql::SQLString passwordBBDD = password.c_str();
+
+				sql::PreparedStatement* pstmt;
+				sql::ResultSet* res;
+
+				pstmt = conn->prepareStatement("SELECT id FROM Usuarios WHERE Username=? AND Pasword=?");
+				pstmt->setString(1, usernameBBDD);
+				pstmt->setString(2, passwordBBDD);
+				pstmt->execute();
+
+				int idUser = 0;
+				int errorCode = 0;
+
+				do
+				{
+					res = pstmt->getResultSet();
+
+					while (res->next())
+					{
+						idUser = res->getInt(1);
+						std::cout << "Resultado de consultar el inicio de sesion: " << res->getInt(1) << std::endl;
+					}
+
+				} while (pstmt->getMoreResults());
+
+
+				if (idUser > 0)
+				{
+					//El cliente ha iniciado sesión
+					errorCode = 1;
+
+					it->second->isLogged = true;
+					SetPlayerSesion(idUser);
+
+					GetPlayeBBDDInfo(idUser);
+				}
+				else
+				{
+					errorCode = 0;
+				}
+
+
+				//Respuesta a cliente
+				pack << static_cast<int>(Protocol::LOGIN);
+				pack << errorCode;
+
+
+
+				if (sock.send(pack, ip, port) != sf::UdpSocket::Status::Done)
+					std::cout << "Error al responder al login." << std::endl;
+				else
+				{
+					std::cout << "Devuelto el mensaje de login a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
+					it->second->isLogging = false;
+				}
+					
+
+				conn->close();
+
+
+			}
+		}
+	}
+
+}
+
+void SetPlayerSesion(int idPlayer)
+{
 	sql::Driver* driver = sql::mysql::get_driver_instance();
 	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
 	conn->setSchema("slitherudp");
 
-	std::cout << "Voy a procesar los datos del cliente, usuario: " << username << ", password: " << password << std::endl;
-
-	sql::SQLString usernameBBDD = username.c_str();
-	sql::SQLString passwordBBDD = password.c_str();
-
 	sql::PreparedStatement* pstmt;
 	sql::ResultSet* res;
 
-	pstmt = conn->prepareStatement("SELECT count(*) FROM Usuarios WHERE Username=? AND Pasword=?");
-	pstmt->setString(1, usernameBBDD);
-	pstmt->setString(2, passwordBBDD);
-	pstmt->execute();
-
-	int loginCoincidence = 0;
-
-	do
-	{
-		res = pstmt->getResultSet();
-
-		while (res->next())
-		{
-			loginCoincidence = res->getInt(1);
-			std::cout << "Resultado de consultar el inicio de sesion: " << res->getInt(1) << std::endl;
-		}
-
-	} while (pstmt->getMoreResults());
-
-
-	if (loginCoincidence > 0)
-	{
-		//El cliente ha iniciado sesión
-	}
-
-
-	//Respuesta a cliente
-	pack << static_cast<int>(Protocol::LOGIN);
-	pack << loginCoincidence;
-
-
-
-	if(sock.send(pack, ip, port) != sf::UdpSocket::Status::Done)
-		std::cout << "Error al responder al login." << std::endl;
-	else
-		std::cout << "Devuelto el mensaje de login a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
+	pstmt = conn->prepareStatement("INSERT INTO Sesion(idUsuario, InicioSesion, FinalSesion, TotalKills, MaxLongitud) VALUES(?, CURRENT_TIME(), CURRENT_TIME(), ?, ?)");
+	pstmt->setInt(1, idPlayer);
+	pstmt->setInt(2, 0);
+	pstmt->setInt(3, 0);
+	pstmt->executeUpdate();
 
 	conn->close();
 
@@ -455,11 +504,131 @@ void GetPlayeBBDDInfo(int idPlayer)
 		-Cantidad de muertes totales
 	*/
 
+	sql::Driver* driver = sql::mysql::get_driver_instance();
+	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+	conn->setSchema("slitherudp");
+
+	sql::PreparedStatement* pstmt;
+	sql::ResultSet* res;
+
+	int partidasGanadas = 0;
+	int partidasJugadas = 0;
+	std::vector<int> idPartidasJugadas;
+	int partidasNoGanadas = 0;
+	int totalKills = 0;
+
 	//1-Consultar datos usuario
 
 	//2-Consultar datos partidas usuarios
+	#pragma region Partidas_Ganadas
+
+	pstmt = conn->prepareStatement("SELECT count(*) FROM Partidas WHERE idGanador=?");
+	pstmt->setInt(1, idPlayer);
+	pstmt->execute();
+
+	do
+	{
+		res = pstmt->getResultSet();
+
+		while (res->next())
+		{
+			partidasGanadas = res->getInt(1);
+			std::cout << "Resultado de consultar el la cantidad de partidas ganadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
+		}
+
+	} while (pstmt->getMoreResults());
+
+	#pragma endregion
+
+	#pragma region Partidas_Jugadas
+
+	pstmt = conn->prepareStatement("SELECT id FROM Partidas WHERE idUsuario=?");
+	pstmt->setInt(1, idPlayer);
+	pstmt->execute();
+
+
+	int auxIdPartida = 0;
+	do
+	{
+		res = pstmt->getResultSet();
+
+		while (res->next())
+		{
+			auxIdPartida = res->getInt(1);
+			idPartidasJugadas.push_back(auxIdPartida);
+			//std::cout << "Resultado de consultar el la cantidad de partidas jugadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
+		}
+
+	} while (pstmt->getMoreResults());
+
+	partidasJugadas = idPartidasJugadas.size();
+
+	#pragma endregion
+
+	#pragma region Partidas_No_Ganadas
+	
+	for (int i = 0; i < idPartidasJugadas.size(); i++)
+	{
+		pstmt = conn->prepareStatement("SELECT idGanador FROM Partidas WHERE id=?");
+		pstmt->setInt(1, idPartidasJugadas[i]);
+		pstmt->execute();
+
+		int auxId;
+		do
+		{
+			res = pstmt->getResultSet();
+
+			while (res->next())
+			{
+				auxId = res->getInt(1);
+				if (auxId != idPlayer)
+					partidasNoGanadas++;
+				//std::cout << "Resultado de consultar el la cantidad de partidas jugadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
+			}
+
+		} while (pstmt->getMoreResults());
+	}
+	
+	#pragma endregion
+
+	#pragma region Kills_Totales
+
+	for (int i = 0; i < idPartidasJugadas.size(); i++)
+	{
+		pstmt = conn->prepareStatement("SELECT Kills FROM Partidas WHERE idUsuario=?");
+		pstmt->setInt(1, idPlayer);
+		pstmt->execute();
+
+		do
+		{
+			res = pstmt->getResultSet();
+
+			while (res->next())
+			{
+				totalKills += res->getInt(1);
+				
+				//std::cout << "Resultado de consultar el la cantidad de partidas jugadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
+			}
+
+		} while (pstmt->getMoreResults());
+	}
+
+	#pragma endregion
+
+	conn->close();
+
+	std::cout <<  "Datos de MMR del usuario que se ha logeado: " << std::endl;
+	std::cout << "  -Partidas jugadas = " << partidasJugadas << std::endl;
+	std::cout << "  -Partidas ganadas = " << partidasGanadas << std::endl;
+	std::cout << "  -Total Deaths = " << partidasNoGanadas << std::endl;
+	std::cout << "  -Total Kills = " <<totalKills << std::endl;
+	std::cout << std::endl;
+
 
 	//3-LLamar a función de MMR
+
+	//ComputeMMRFromPlayer(idPlayer);
+	std::cout << "MMR value for this user === " << ((partidasGanadas / partidasJugadas) * 80) + ((totalKills / partidasNoGanadas) * 20) << std::endl;
 
 }
 
@@ -477,7 +646,8 @@ void UpdatePlayerBBDDInfo(int idPlayer)
 void ComputeMMRFromPlayer(int idPlayer)
 {
 	/*Computar el MMR del usuario
-		MMR1=((NumVictorias/NumPartidasJugadas)*80)+(NumMuertesTotales*20);				+-5/+-10 para encontrar partida sería lo óptimo pero dada la esasez de jugadores para testear simplemente ordenarlos
+		MMR1=((NumVictorias/NumPartidasJugadas)*80)+(NumMuertesTotales*20);				+-5/+-10 para encontrar partida sería lo óptimo pero dada la escasez de jugadores para testear simplemente ordenarlos
+		MMR2=((NumVictorias/NumPartidasJugadas)*80)+((NumMuertesTotales/NumPartidasNoGanadas)*20);				+-5/+-10 para encontrar partida sería lo óptimo pero dada la escasez de jugadores para testear simplemente ordenarlos
 	*/
 
 

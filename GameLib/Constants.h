@@ -30,6 +30,6 @@ enum Protocol
 	FOOD_EATEN,
 	FOOD_SPAWNED, 
 	REGISTER,
-	LOGIN, 
+	LOGIN,
 	UPDATEUSER
 };

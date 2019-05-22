@@ -10,6 +10,8 @@ ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigne
 	numPings = 0;
 	CreateInitialBodyPositions(headPos);
 	accumMovement = sf::Vector2f(0,0);
+	isLogging = false;
+	isLogged = false;
 }
 
 ClientProxy::~ClientProxy()

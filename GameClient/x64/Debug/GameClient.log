@@ -1,2 +1,6 @@
-﻿  ClientSource.cpp
-  GameClient.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameClient.exe
+﻿  Board.cpp
+  ClientSource.cpp
+  Player.cpp
+  Slither.cpp
+  Generando código...
+  GameClient.vcxproj -> C:\Users\adria\Desktop\AA4_Practica_UDP\x64\Debug\GameClient.exe

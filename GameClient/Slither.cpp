@@ -39,6 +39,7 @@ void Slither::CreateBodyCircle(sf::Vector2f pos)
 {
 	sf::CircleShape shape(radius);
 	shape.setFillColor(player->color);
+	shape.setOrigin(shape.getRadius() / 2.f, shape.getRadius() / 2.f);
 	shape.setPosition(pos);
 	bodyCircles.push_back(shape);
 }

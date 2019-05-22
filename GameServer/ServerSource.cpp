@@ -20,7 +20,7 @@ const float minFoodDist = 200.f;
 //lists / maps
 std::map<int, ClientProxy*> clientProxies;
 std::map<int, CriticPack*> criticPackets;
-std::map<int, Food*> foodMap;
+std::vector<Food*> foodVector;
 
 
 //declarations:
@@ -71,9 +71,9 @@ int main()
 	//initialize food:
 	InitializeFood();
 
-	//Thread de validació de moviment
-	//std::thread foodUpdateThread(&FoodUpdateThread);
-	//foodUpdateThread.detach();
+	//Thread de food
+	std::thread foodUpdateThread(&FoodUpdateThread);
+	foodUpdateThread.detach();
 
 	#pragma endregion
 
@@ -262,14 +262,14 @@ void FoodUpdateThread()
 				//tota la info del menjar:
 				//només els que té més aprop
 				std::vector<Food*> closeFood;
-				for (std::map<int, Food*>::iterator foodit = foodMap.begin(); foodit != foodMap.end(); ++foodit)
+
+				for (int i = 0; i < (int)foodVector.size(); i++)
 				{
-					if (Distance(it->second->bodyPositions[0], foodit->second->position) < minFoodDist)
+					if (Distance(it->second->bodyPositions[0], foodVector[i]->position) < minFoodDist)
 					{
-						closeFood.push_back(foodit->second);
+						closeFood.push_back(foodVector[i]);
 					}
 				}
-
 				//num foods:
 				pack << static_cast<int>(closeFood.size());
 				for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
@@ -347,11 +347,11 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	//tota la info del menjar:
 	//només els que té més aprop
 	std::vector<Food*> closeFood;
-	for (std::map<int, Food*>::iterator it = foodMap.begin(); it != foodMap.end(); ++it)
+	for (int i = 0; i < (int)foodVector.size(); i++)
 	{
-		if (Distance(newClient->bodyPositions[0], it->second->position) < minFoodDist)
+		if (Distance(newClient->bodyPositions[0], foodVector[i]->position) < minFoodDist)
 		{
-			closeFood.push_back(it->second);
+			closeFood.push_back(foodVector[i]);
 		}
 	}
 
@@ -360,7 +360,6 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	for (std::vector<Food*>::iterator it = closeFood.begin(); it != closeFood.end(); ++it)
 	{
 		Food* food = *it;
-		pack << food->id;
 		pack << food->position.x;
 		pack << food->position.y;
 		//pack << food->color; //no puc passar el color?
@@ -402,6 +401,33 @@ void AccumMovement(sf::Packet pack)
 	clientProxies[idPlayer]->lastIdMove = idMove;
 }
 
+void FoodCollisionCheck(std::vector<sf::Vector2f> playerPositions, float playerBodyRadius)
+{
+	int i = 0;
+	while (i < (int)foodVector.size())
+	{
+		bool collided = false;
+		for (int j = 0; j < (int)playerPositions.size(); j++)
+		{
+			if (Distance(foodVector[i]->position, playerPositions[j]) < playerBodyRadius)
+			{
+				collided = true;
+				break;
+			}
+		}
+
+		if (/*Collision*/collided)
+		{
+			//Food eaten
+			foodVector.erase(foodVector.begin() + i);
+		}
+		else
+		{
+			i++;
+		}
+	}
+}
+
 void MovementControl(int idPlayer, int idMove)
 {
 	sf::Vector2f possiblePos = clientProxies[idPlayer]->SumToHeadPosition();
@@ -431,6 +457,8 @@ void MovementControl(int idPlayer, int idMove)
 	{
 		sock.send(pack, it->second->ip, it->second->port);
 	}
+
+	FoodCollisionCheck(clientProxies[idPlayer]->bodyPositions, 13.f);
 }
 
 void InitializeFood()
@@ -440,7 +468,7 @@ void InitializeFood()
 		sf::Vector2f pos;
 		pos.x = rand() % SCREEN_WIDTH;
 		pos.y = rand() % SCREEN_HEIGHT;
-		foodMap[i] = new Food(i, pos);
+		foodVector.push_back(new Food(i, pos));
 	}
 }
 

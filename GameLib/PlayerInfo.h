@@ -18,5 +18,8 @@ public:
 	std::vector<sf::Vector2f> bodyPositions;
 	sf::Color color;
 	sf::Vector2f direction;
+
+	float PlayerInfo::Distance(sf::Vector2f v1, sf::Vector2f v2);
+	void PlayerInfo::Normalize(sf::Vector2f& vec);
 };
 

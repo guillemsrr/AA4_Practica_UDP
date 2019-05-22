@@ -4,6 +4,15 @@
 
 Board::Board()
 {
+	for (int i = 0; i < 100; i++)
+	{
+		sf::CircleShape* newFood = new sf::CircleShape(5.f);
+		newFood->setOrigin(2.5f, 2.5f);
+		newFood->setPosition(0.f, 0.f);
+		newFood->setFillColor(sf::Color::Blue);
+
+		foodShapeBuffer.push_back(newFood);
+	}
 }
 
 
@@ -36,6 +45,13 @@ void Board::DrawBoard()
 {
 	window.clear();
 
+	//paint foodballs:
+	for (int i = 0; i < (int)foodPositions.size(); i++)
+	{
+		foodShapeBuffer[i]->setPosition(foodPositions[i]);
+		window.draw(*foodShapeBuffer[i]);
+	}
+
 	//paint all players
 	for (std::map<int, Slither*>::iterator it = slithersMap.begin(); it != slithersMap.end(); ++it)
 	{
@@ -44,12 +60,6 @@ void Board::DrawBoard()
 		{
 			window.draw(circle);
 		}
-	}
-
-	//paint foodballs:
-	for (std::map<int, FoodBall*>::iterator it = foodBallMap.begin(); it != foodBallMap.end(); ++it)
-	{
-		window.draw(it->second->circleShape);
 	}
 
 	window.display();

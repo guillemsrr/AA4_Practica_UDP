@@ -11,7 +11,7 @@ Player::Player(sf::Packet* pack)
 	*pack >> id;
 	*pack >> alias;
 	AddBodyPositions(pack);
-	speed = 100.0f;
+	speed = 125.0f;
 }
 
 Player::~Player()
@@ -98,11 +98,21 @@ void Player::UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Pack
 
 void Player::UpdatePosition(sf::Vector2f move)
 {
-	for (int i = (int)bodyPositions.size() - 1; i > 0; i--)
+
+	bodyPositions[0] += move;
+
+	for (int i = 1; i < (int)bodyPositions.size(); i++)
+	{
+		sf::Vector2f dir = bodyPositions[i] - bodyPositions[i - 1];
+		Normalize(dir);
+		bodyPositions[i] = bodyPositions[i - 1] + dir * 10.f;
+	}
+
+	/*for (int i = (int)bodyPositions.size() - 1; i > 0; i--)
 	{
 		bodyPositions[i] = bodyPositions[i - 1];
 	}
-	bodyPositions[0] += move;
+	bodyPositions[0] += move;*/
 }
 
 

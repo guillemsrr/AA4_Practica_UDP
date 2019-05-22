@@ -27,7 +27,8 @@ public:
 	sf::RenderWindow window;
 	sf::Vector2f playerMovement;
 	std::map<int, Slither*> slithersMap;//key is idPlayer
-	std::map<int, FoodBall*> foodBallMap;
+	std::vector<sf::Vector2f> foodPositions;
+	std::vector<sf::CircleShape*> foodShapeBuffer;
 
 private:
 	sf::Clock frameTimeClock;

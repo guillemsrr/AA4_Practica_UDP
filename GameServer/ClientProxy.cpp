@@ -16,19 +16,6 @@ ClientProxy::~ClientProxy()
 {
 }
 
-float Distance2(sf::Vector2f v1, sf::Vector2f v2)
-{
-	sf::Vector2f v = v2 - v1;
-	return sqrt(v.x*v.x + v.y*v.y);
-}
-
-void Normalize(sf::Vector2f& vec)
-{
-	sf::Vector2f zero = sf::Vector2f(0.f, 0.f);
-	float dist = Distance2(vec, zero);
-	vec /= dist;
-}
-
 void ClientProxy::CreateInitialBodyPositions(sf::Vector2f headPos)
 {
 	bodyPositions.push_back(headPos);

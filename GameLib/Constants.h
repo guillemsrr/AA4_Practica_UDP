@@ -3,18 +3,13 @@
 #include <iostream>
 
 
-//casa Guillem
-//#define IP "192.168.1.133"
 #define IP "127.0.0.1"
-//classe
-//#define IP "10.40.0.43"
-
 #define PORT 50000
 
 #define SCREEN_WIDTH 960
 #define SCREEN_HEIGHT 540
 
-#define PERCENT_PACKETLOSS 0.1f
+#define PERCENT_PACKETLOSS 0.05f
 
 enum Protocol
 {
@@ -27,6 +22,17 @@ enum Protocol
 	CMD,
 	DISCONNECTED,
 	MOVE,
-	FOOD_EATEN,
-	FOOD_SPAWNED
+	FOOD_UPDATE
 };
+
+//timers:
+#define CRITICPACKETSTIMER 10.0f
+#define PINGTIMER 5.0f
+#define PERCENTLOSTTIMER 0.05f
+#define DISCONNECTTIMER 10.f
+#define MAXUNOPERATIVETIMER 30.f
+#define MOVEMENTUPDATETIMER 0.05f
+#define FOODUPDATETIMER 0.5f
+
+
+

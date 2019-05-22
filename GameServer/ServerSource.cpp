@@ -15,19 +15,12 @@
 
 sf::UdpSocket sock;
 const int maxFood = 100;
+const float minFoodDist = 200.f;
 
 //lists / maps
 std::map<int, ClientProxy*> clientProxies;
 std::map<int, CriticPack*> criticPackets;
 std::map<int, Food*> foodMap;
-
-//timers:
-const float criticPacketsTimer = 10.0f;
-const float pingTimer = 5.0f;
-const float percentLostTimer = 0.05f;
-const float disconnectTimer = 10.f;
-const float maxUnoperativeTime = 30.f;
-const float serverUpdateTimer = 0.05f;//?¿?¿
 
 
 //declarations:
@@ -36,12 +29,14 @@ void PingThreadFunction();
 void DisconnectionCheckerThreadFunction();
 void CriticPacketsManagerThreadFunction();
 void MovementControlThread();
+void FoodUpdateThread();
 //other:
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AccumMovement(sf::Packet pack);
 void MovementControl(int idPlayer, int idMove);
 void InitializeFood();
 bool RandomPacketLost();
+float Distance(sf::Vector2f v1, sf::Vector2f v2);
 
 
 int main()
@@ -75,6 +70,10 @@ int main()
 
 	//initialize food:
 	InitializeFood();
+
+	//Thread de validació de moviment
+	//std::thread foodUpdateThread(&FoodUpdateThread);
+	//foodUpdateThread.detach();
 
 	#pragma endregion
 
@@ -119,7 +118,7 @@ int main()
 		}
 		else
 		{
-			std::cout << "Packet lost " << std::endl;
+			std::cout << "Packet lost (on purpose)" << std::endl;
 		}
 	}
 
@@ -136,7 +135,7 @@ void PingThreadFunction()
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > pingTimer)
+		if (t1.asSeconds() > PINGTIMER)
 		{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
@@ -163,13 +162,13 @@ void DisconnectionCheckerThreadFunction()
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > disconnectTimer)
+		if (t1.asSeconds() > DISCONNECTTIMER)
 		{
 			//std::cout << "Checking for disconnected players" << std::endl;
 			//Comprobar si el numPings supera el límite y enviar el DISCONNECTED a todos los demás clientes
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); /*++it*/)
 			{
-				if (it->second->numPings >= maxUnoperativeTime)
+				if (it->second->numPings >= MAXUNOPERATIVETIMER)
 				{
 					//Añadir el paquete a la lista de críticos
 					pack << static_cast<int>(Protocol::DISCONNECTED);
@@ -210,7 +209,7 @@ void CriticPacketsManagerThreadFunction()
 	{
 		sf::Time t1 = clock.getElapsedTime();
 
-		if (t1.asSeconds() > criticPacketsTimer)
+		if (t1.asSeconds() > CRITICPACKETSTIMER)
 		{
 			for (std::map<int, CriticPack*>::iterator it = criticPackets.begin(); it != criticPackets.end(); ++it)
 			{
@@ -232,7 +231,7 @@ void MovementControlThread()
 	while (true)
 	{
 		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > percentLostTimer)
+		if (t1.asSeconds() > MOVEMENTUPDATETIMER)
 		{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
@@ -241,6 +240,51 @@ void MovementControlThread()
 					MovementControl(it->second->id, it->second->lastIdMove);
 				}
 			}
+			clock.restart();
+		}
+	}
+}
+
+void FoodUpdateThread()
+{
+	sf::Clock clock;
+	sf::Packet pack;
+
+	while (true)
+	{
+		sf::Time t1 = clock.getElapsedTime();
+		if (t1.asSeconds() > FOODUPDATETIMER)
+		{
+			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+			{
+				pack << static_cast<int>(Protocol::FOOD_UPDATE);
+
+				//tota la info del menjar:
+				//només els que té més aprop
+				std::vector<Food*> closeFood;
+				for (std::map<int, Food*>::iterator foodit = foodMap.begin(); foodit != foodMap.end(); ++foodit)
+				{
+					if (Distance(it->second->bodyPositions[0], foodit->second->position) < minFoodDist)
+					{
+						closeFood.push_back(foodit->second);
+					}
+				}
+
+				//num foods:
+				pack << static_cast<int>(closeFood.size());
+				for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
+				{
+					Food* food = *closeit;
+					pack << food->id;
+					pack << food->position.x;
+					pack << food->position.y;
+					//pack << food->color; //no puc passar el color?
+				}
+
+				sock.send(pack, it->second->ip, it->second->port);
+				pack.clear();
+			}
+
 			clock.restart();
 		}
 	}
@@ -301,14 +345,26 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	}
 
 	//tota la info del menjar:
-	//pack << static_cast<int>(foodMap.size());
-	//for (std::map<int, Food*>::iterator it = foodMap.begin(); it != foodMap.end(); ++it)
-	//{
-	//	pack << it->second->id;
-	//	pack << it->second->position.x;
-	//	pack << it->second->position.y;
-	//	//pack << it->second->color; //no puc passar el color?
-	//}
+	//només els que té més aprop
+	std::vector<Food*> closeFood;
+	for (std::map<int, Food*>::iterator it = foodMap.begin(); it != foodMap.end(); ++it)
+	{
+		if (Distance(newClient->bodyPositions[0], it->second->position) < minFoodDist)
+		{
+			closeFood.push_back(it->second);
+		}
+	}
+
+	//num foods:
+	pack << static_cast<int>(closeFood.size());
+	for (std::vector<Food*>::iterator it = closeFood.begin(); it != closeFood.end(); ++it)
+	{
+		Food* food = *it;
+		pack << food->id;
+		pack << food->position.x;
+		pack << food->position.y;
+		//pack << food->color; //no puc passar el color?
+	}
 
 
 	sock.send(pack, ip, port);
@@ -379,7 +435,13 @@ void MovementControl(int idPlayer, int idMove)
 
 void InitializeFood()
 {
-
+	for (int i = 0; i < maxFood; i++)
+	{
+		sf::Vector2f pos;
+		pos.x = rand() % SCREEN_WIDTH;
+		pos.y = rand() % SCREEN_HEIGHT;
+		foodMap[i] = new Food(i, pos);
+	}
 }
 
 float GetRandomFloat()
@@ -392,14 +454,18 @@ float GetRandomFloat()
 
 bool RandomPacketLost()
 {
-	return true;
-
 	float f = GetRandomFloat();
-	std::cout << "random float is: " << f << std::endl;
+	//std::cout << "random float is: " << f << std::endl;
 	if (f > PERCENT_PACKETLOSS)
 	{
-		return true;
+		return true;//all good
 	}
 
-	return false;
+	return false;//packet lost
+}
+
+float Distance(sf::Vector2f v1, sf::Vector2f v2)
+{
+	sf::Vector2f v = v2 - v1;
+	return sqrt(v.x*v.x + v.y*v.y);
 }

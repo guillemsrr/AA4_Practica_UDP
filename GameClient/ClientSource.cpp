@@ -303,7 +303,6 @@ void GraphicsInterface()
 		}
 
 		//draw foodballs:
-		
 		for (std::map<int, FoodBall*>::iterator it = foodBallMap.begin(); it != foodBallMap.end(); ++it)
 		{
 			board.DrawFood(it->second->circleShape);

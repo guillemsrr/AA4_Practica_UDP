@@ -15,7 +15,7 @@
 
 sf::UdpSocket sock;
 const int maxFood = 100;
-const int minFoodDist = 200;
+const float minFoodDist = 200.f;
 
 //lists / maps
 std::map<int, ClientProxy*> clientProxies;
@@ -36,7 +36,7 @@ void AccumMovement(sf::Packet pack);
 void MovementControl(int idPlayer, int idMove);
 void InitializeFood();
 bool RandomPacketLost();
-int Distance(sf::Vector2i v1, sf::Vector2i v2);
+float Distance(sf::Vector2f v1, sf::Vector2f v2);
 
 
 int main()
@@ -315,9 +315,9 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		std::cout << "creating new client" << std::endl;
 		//és un nou player
 		int id = (int)clientProxies.size();
-		int x = rand() % SCREEN_WIDTH;
-		int y = rand() % SCREEN_HEIGHT;
-		sf::Vector2i headPos(x, y);
+		float x = rand() % SCREEN_WIDTH;
+		float y = rand() % SCREEN_HEIGHT;
+		sf::Vector2f headPos(x, y);
 		newClient = new ClientProxy(id, alias, ip, port, headPos);
 	}
 
@@ -393,14 +393,14 @@ void AccumMovement(sf::Packet pack)
 	int idPlayer;
 	int idMove;
 	pack >> idPlayer>>idMove;
-	sf::Vector2i sumPos;
+	sf::Vector2f sumPos;
 	pack >> sumPos.x >> sumPos.y;
 
 	clientProxies[idPlayer]->accumMovement += sumPos;//en comptes de tractar-lo directament, l'acumulo i es tractarà en el thread de moviment
 	clientProxies[idPlayer]->lastIdMove = idMove;
 }
 
-void FoodCollisionCheck(std::vector<sf::Vector2i> playerPositions, int playerBodyRadius)
+void FoodCollisionCheck(std::vector<sf::Vector2f> playerPositions, float playerBodyRadius)
 {
 	int i = 0;
 	//std::cout << "Food vector size: " << (int)foodVector.size() << std::endl;
@@ -430,7 +430,7 @@ void FoodCollisionCheck(std::vector<sf::Vector2i> playerPositions, int playerBod
 
 void MovementControl(int idPlayer, int idMove)
 {
-	sf::Vector2i possiblePos = clientProxies[idPlayer]->SumToHeadPosition();
+	sf::Vector2f possiblePos = clientProxies[idPlayer]->SumToHeadPosition();
 
 	//controlar la posició
 	if (possiblePos.x < 0 || possiblePos.x > SCREEN_WIDTH || possiblePos.y < 0 || possiblePos.y > SCREEN_HEIGHT)
@@ -444,7 +444,7 @@ void MovementControl(int idPlayer, int idMove)
 		clientProxies[idPlayer]->UpdatePosition(possiblePos);
 	}
 
-	clientProxies[idPlayer]->accumMovement = sf::Vector2i(0,0);
+	clientProxies[idPlayer]->accumMovement = sf::Vector2f(0,0);
 
 	//ho enviem a tots els players
 	sf::Packet pack;
@@ -465,7 +465,7 @@ void InitializeFood()
 {
 	for (int i = 0; i < maxFood; i++)
 	{
-		sf::Vector2i pos;
+		sf::Vector2f pos;
 		pos.x = rand() % SCREEN_WIDTH;
 		pos.y = rand() % SCREEN_HEIGHT;
 		foodVector.push_back(new Food(i, pos));
@@ -493,8 +493,8 @@ bool RandomPacketLost()
 	return false;//packet lost
 }
 
-int Distance(sf::Vector2i v1, sf::Vector2i v2)
+float Distance(sf::Vector2f v1, sf::Vector2f v2)
 {
-	sf::Vector2i v = v2 - v1;
-	return (int)sqrt(v.x*v.x + v.y*v.y);
+	sf::Vector2f v = v2 - v1;
+	return sqrt(v.x*v.x + v.y*v.y);
 }

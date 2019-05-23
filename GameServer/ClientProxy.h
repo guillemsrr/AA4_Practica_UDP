@@ -8,25 +8,25 @@
 class ClientProxy: public PlayerInfo
 {
 public:
-	ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigned short _port, sf::Vector2i headPos);
+	ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigned short _port, sf::Vector2f headPos);
 	~ClientProxy();
 
 	sf::IpAddress ip;
 	unsigned short port;
 	int numPings;
 
-	sf::Vector2i accumMovement;
+	sf::Vector2f accumMovement;
 
-	void CreateInitialBodyPositions(sf::Vector2i headPos);
+	void CreateInitialBodyPositions(sf::Vector2f headPos);
 	void PutBodyPositions(sf::Packet* pack);
 	void AddDataToPacket(sf::Packet* pack);
 
-	sf::Vector2i SumToHeadPosition();
+	sf::Vector2f SumToHeadPosition();
 	void CreateBodyPosition();
-	void UpdatePosition(sf::Vector2i headPos);
+	void UpdatePosition(sf::Vector2f headPos);
 	int lastIdMove;
 
 private:
-	const int separation = 10;
+	const float separation = 10.0f;
 };
 

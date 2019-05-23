@@ -8,12 +8,12 @@ PlayerInfo::PlayerInfo()
 }
 
 
-PlayerInfo::PlayerInfo(int _id, std::string _alias, int _x, int _y, sf::Color _color)
+PlayerInfo::PlayerInfo(int _id, std::string _alias, float _x, float _y, sf::Color _color)
 {
 	id = _id;
 	alias = _alias;
 
-	sf::Vector2i headPos;
+	sf::Vector2f headPos;
 	headPos.x = _x;
 	headPos.y = _y;
 	bodyPositions.push_back(headPos);
@@ -26,15 +26,15 @@ PlayerInfo::~PlayerInfo()
 {
 }
 
-int PlayerInfo::Distance(sf::Vector2i v1, sf::Vector2i v2)
+float PlayerInfo::Distance(sf::Vector2f v1, sf::Vector2f v2)
 {
-	sf::Vector2i v = v2 - v1;
+	sf::Vector2f v = v2 - v1;
 	return sqrt(v.x*v.x + v.y*v.y);
 }
 
-void PlayerInfo::Normalize(sf::Vector2i& vec)
+void PlayerInfo::Normalize(sf::Vector2f& vec)
 {
-	sf::Vector2i zero = sf::Vector2i(0.f, 0.f);
-	int dist = Distance(vec, zero);
+	sf::Vector2f zero = sf::Vector2f(0.f, 0.f);
+	float dist = Distance(vec, zero);
 	vec /= dist;
 }

@@ -5,10 +5,10 @@ class FoodBall :
 	public Food
 {
 public:
-	FoodBall(int _id, sf::Vector2i pos);
+	FoodBall(int _id, sf::Vector2f pos);
 	~FoodBall();
 
 	sf::CircleShape circleShape;
-	int radius = 5;
+	float radius = 5.f;
 };
 

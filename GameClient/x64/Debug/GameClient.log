@@ -1,2 +1,8 @@
-﻿  Player.cpp
-  GameClient.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameClient.exe
+﻿  Board.cpp
+  ClientSource.cpp
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(107): warning C4101: 'id': unreferenced local variable
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(241): warning C4101: 'id': unreferenced local variable
+  Player.cpp
+  Slither.cpp
+  Generating Code...
+  GameClient.vcxproj -> D:\users\Bleinz\Documents\Slitherio\AA4_Practica_UDP\x64\Debug\GameClient.exe

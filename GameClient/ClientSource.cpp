@@ -171,21 +171,26 @@ int main()
 							pack >> headPos.x;
 							pack >> headPos.y;
 
-							if (movesMap[idMove] != headPos)
+							float tol = 0.01f;
+							sf::Vector2f sub = movesMap[idMove] - headPos;
+							sub.x = abs(sub.x);
+							sub.y = abs(sub.y);
+							if (sqrt(sub.x*sub.x + sub.y*sub.y) > tol)
 							//if (((int)movesMap[idMove].x != (int)headPos.x) || ((int)movesMap[idMove].y != (int)headPos.y))
 							{
 								std::cout << "Position modified!" << std::endl;
+								//std::cout << "movesMap y: "<< (float)movesMap[idMove].y << " head pos y " << (float)headPos.y << std::endl;
+
+								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
+								board.UpdateSlither(idPlayer);
+
+								accumMove = sf::Vector2f(0.0f, 0.0f);
 								bool x = (float)movesMap[idMove].x != (float)headPos.x;
 								bool y = ((float)movesMap[idMove].y != (float)headPos.y);
 								std::cout << "x bool: " << x << std::endl;
 								std::cout << "y bool: " << y << std::endl;
-								//std::cout << "headPos: (x "<< headPos.x << " , y " << headPos.y << std::endl;
-								//std::cout << "movesMap[idMove]: (x "<< movesMap[idMove].x << " , y " << movesMap[idMove].y << std::endl;
-								std::cout << "movesMap y: "<< movesMap[idMove].y << " head pos y " << headPos.y << std::endl;
-
-								//m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
-								//board.UpdateSlither(idPlayer);
-								//accumMove = sf::Vector2f();
+								std::cout << "headPos: (x "<< headPos.x << " , y " << headPos.y << std::endl;
+								std::cout << "movesMap[idMove]: (x "<< movesMap[idMove].x << " , y " << movesMap[idMove].y << std::endl;
 							}
 							else
 							{

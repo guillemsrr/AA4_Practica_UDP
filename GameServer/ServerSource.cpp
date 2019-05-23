@@ -72,8 +72,8 @@ int main()
 	InitializeFood();
 
 	//Thread de food
-	//std::thread foodUpdateThread(&FoodUpdateThread);
-	//foodUpdateThread.detach();
+	/*std::thread foodUpdateThread(&FoodUpdateThread);
+	foodUpdateThread.detach();*/
 
 	#pragma endregion
 
@@ -403,6 +403,7 @@ void AccumMovement(sf::Packet pack)
 void FoodCollisionCheck(std::vector<sf::Vector2f> playerPositions, float playerBodyRadius)
 {
 	int i = 0;
+	//std::cout << "Food vector size: " << (int)foodVector.size() << std::endl;
 	while (i < (int)foodVector.size())
 	{
 		bool collided = false;
@@ -481,6 +482,7 @@ float GetRandomFloat()
 
 bool RandomPacketLost()
 {
+	return true;
 	float f = GetRandomFloat();
 	//std::cout << "random float is: " << f << std::endl;
 	if (f > PERCENT_PACKETLOSS)

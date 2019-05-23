@@ -26,8 +26,12 @@ void Player::AddBodyPositions(sf::Packet* pack)
 	for (int i = 0; i < numPos; i++)
 	{
 		sf::Vector2f pos;
-		*pack >> pos.x;
-		*pack >> pos.y;
+		int x, y;
+		*pack >> x;
+		*pack >> y;
+
+		pos.x = (float)x / 1000.f;
+		pos.y = (float)y / 1000.f;
 		bodyPositions.push_back(pos);
 	}
 }
@@ -90,8 +94,13 @@ void Player::UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Pack
 
 	for (int i = 1; i < bodyPositions.size(); i++)
 	{
-		*pack >> bodyPositions[i].x;
-		*pack >> bodyPositions[i].y;
+		int x, y;
+		*pack >> x;
+		*pack >> y;
+
+		bodyPositions[i].x = (float)x / 1000.f;
+		bodyPositions[i].y = (float)y / 1000.f;
+
 	}
 }
 

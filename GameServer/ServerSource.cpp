@@ -72,8 +72,8 @@ int main()
 	InitializeFood();
 
 	//Thread de food
-	std::thread foodUpdateThread(&FoodUpdateThread);
-	foodUpdateThread.detach();
+	/*std::thread foodUpdateThread(&FoodUpdateThread);
+	foodUpdateThread.detach();*/
 
 	#pragma endregion
 
@@ -275,7 +275,7 @@ void FoodUpdateThread()
 				for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
 				{
 					Food* food = *closeit;
-					pack << food->id;
+					//pack << food->id;
 					pack << food->position.x;
 					pack << food->position.y;
 					//pack << food->color; //no puc passar el color?
@@ -365,7 +365,6 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		//pack << food->color; //no puc passar el color?
 	}
 
-
 	sock.send(pack, ip, port);
 
 	//Enviar NEW_PLAYER a todos los demás clientes
@@ -394,16 +393,21 @@ void AccumMovement(sf::Packet pack)
 	int idPlayer;
 	int idMove;
 	pack >> idPlayer>>idMove;
-	sf::Vector2f sumPos;
-	pack >> sumPos.x >> sumPos.y;
+	int x, y;
+	pack >> x >> y;
 
-	clientProxies[idPlayer]->accumMovement += sumPos;//en comptes de tractar-lo directament, l'acumulo i es tractarà en el thread
+	sf::Vector2f sumPos;
+	sumPos.x = (float)x / 1000.f;
+	sumPos.y = (float)y / 1000.f;
+
+	clientProxies[idPlayer]->accumMovement += sumPos;//en comptes de tractar-lo directament, l'acumulo i es tractarà en el thread de moviment
 	clientProxies[idPlayer]->lastIdMove = idMove;
 }
 
 void FoodCollisionCheck(std::vector<sf::Vector2f> playerPositions, float playerBodyRadius)
 {
 	int i = 0;
+	//std::cout << "Food vector size: " << (int)foodVector.size() << std::endl;
 	while (i < (int)foodVector.size())
 	{
 		bool collided = false;
@@ -419,7 +423,7 @@ void FoodCollisionCheck(std::vector<sf::Vector2f> playerPositions, float playerB
 		if (/*Collision*/collided)
 		{
 			//Food eaten
-			foodVector.erase(foodVector.begin() + i);
+			foodVector.erase(foodVector.begin() + i);//comprovar que funcioni
 		}
 		else
 		{
@@ -458,7 +462,7 @@ void MovementControl(int idPlayer, int idMove)
 		sock.send(pack, it->second->ip, it->second->port);
 	}
 
-	FoodCollisionCheck(clientProxies[idPlayer]->bodyPositions, 13.f);
+	FoodCollisionCheck(clientProxies[idPlayer]->bodyPositions, 13.f);//13 provisional
 }
 
 void InitializeFood()
@@ -482,6 +486,8 @@ float GetRandomFloat()
 
 bool RandomPacketLost()
 {
+	return true;
+
 	float f = GetRandomFloat();
 	//std::cout << "random float is: " << f << std::endl;
 	if (f > PERCENT_PACKETLOSS)

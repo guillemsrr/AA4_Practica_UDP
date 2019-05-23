@@ -47,14 +47,6 @@ int main()
 	std::thread helloThread(&HelloSending);
 	helloThread.detach();
 
-	std::thread graphicsInterface(&GraphicsInterface);
-	graphicsInterface.detach();
-
-	std::thread accumControlThread(&MoveSending);
-	accumControlThread.detach();
-
-	std::thread interpolationsThread(&InterpolatePositions);
-	interpolationsThread.detach();
 
 	while (true)
 	{
@@ -114,6 +106,15 @@ int main()
 					board.foodPositions = foodPositions;//això s'hauria de millorar..
 
 					received = true;
+
+					std::thread graphicsInterface(&GraphicsInterface);
+					graphicsInterface.detach();
+
+					std::thread accumControlThread(&MoveSending);
+					accumControlThread.detach();
+
+					std::thread interpolationsThread(&InterpolatePositions);
+					interpolationsThread.detach();
 				}
 					break;
 				case NEW_PLAYER:
@@ -166,17 +167,39 @@ int main()
 
 							//comprovem en quina posició estàvem / estem, i si coincideix
 							int numPos;
-							sf::Vector2f headPos;
+							int x, y;
 							pack >> numPos;
-							pack >> headPos.x;
-							pack >> headPos.y;
+							pack >> x;
+							pack >> y;
 
-							if (movesMap[idMove] != headPos)
+							sf::Vector2f headPos;
+							headPos.x = (float)x / 1000.f;
+							headPos.y = (float)y / 1000.f;
+
+
+							float tol = 1;// sqrt(2) / 10.f;
+							sf::Vector2f sub = movesMap[idMove] - headPos;
+							sub.x = abs(sub.x);
+							sub.y = abs(sub.y);
+							if (sqrt(sub.x*sub.x + sub.y*sub.y) > tol)
 							{
 								std::cout << "Position modified!" << std::endl;
+								//std::cout << "movesMap y: "<< (float)movesMap[idMove].y << " head pos y " << (float)headPos.y << std::endl;
 
 								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
 								board.UpdateSlither(idPlayer);
+
+								accumMove = sf::Vector2f(0.0f, 0.0f);
+								bool x = (float)movesMap[idMove].x != (float)headPos.x;
+								bool y = ((float)movesMap[idMove].y != (float)headPos.y);
+								std::cout << "x bool: " << x << std::endl;
+								std::cout << "y bool: " << y << std::endl;
+								std::cout << "headPos: (x "<< headPos.x << " , y " << headPos.y << std::endl;
+								std::cout << "movesMap[idMove]: (x "<< movesMap[idMove].x << " , y " << movesMap[idMove].y << std::endl;
+							}
+							else
+							{
+								std::cout << "good position" << std::endl;
 							}
 
 							//esborrem els moviments anteriors posant-los a toErase
@@ -191,6 +214,7 @@ int main()
 							{
 								movesMap.erase(toErase[0]);
 								toErase.erase(toErase.begin());
+								std::cout << "erasing" << std::endl;
 							}
 						}
 					}
@@ -212,7 +236,7 @@ int main()
 					std::lock_guard<std::mutex> guard(mtx);
 
 					//update food map
-					//create the balls:
+
 					int numFood;
 					pack >> numFood;
 					//std::cout << "num balls: " << numFood << std::endl;
@@ -227,6 +251,7 @@ int main()
 					}
 
 					board.foodPositions = foodPositions;
+					//std::cout << "foodPositions size: " << foodPositions.size() << std::endl;
 				}
 					break;
 				break;
@@ -289,20 +314,20 @@ void GraphicsInterface()
 
 		board.DrawBoard();
 		board.Commands(m_player);
+
+		sf::Vector2i sumInt = sf::Vector2i((int)(board.playerMovement.x*1000), (int)(board.playerMovement.y*1000));
+		board.playerMovement = sf::Vector2f((float)sumInt.x/1000.f, (float)sumInt.y / 1000.f);
 		accumMove += board.playerMovement;
 
-		////prediction movement:
-		//if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
-		//{
-		//	m_player->UpdatePosition(board.playerMovement);
-		//	board.UpdateSlither(m_player->id);
-		//}
+		sumInt = sf::Vector2i((int)(accumMove.x * 1000), (int)(accumMove.y * 1000));
+		accumMove = sf::Vector2f((float)sumInt.x / 1000.f, (float)sumInt.y / 1000.f);
 
-		//draw foodballs:
-		/*for (std::map<int, FoodBall*>::iterator it = foodBallMap.begin(); it != foodBallMap.end(); ++it)
+		////prediction movement:
+		if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
 		{
-			board.DrawFood(it->second->circleShape);
-		}*/
+			m_player->UpdatePosition(board.playerMovement);
+			board.UpdateSlither(m_player->id);
+		}
 	}
 }
 
@@ -330,7 +355,7 @@ void MoveSending()
 
 				movesMap[actualMoveID] = m_player->bodyPositions[0];
 				actualMoveID++;
-				pack << accumMove.x << accumMove.y;
+				pack << (int)(accumMove.x*1000) << (int)(accumMove.y*1000);
 
 				if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
 				{

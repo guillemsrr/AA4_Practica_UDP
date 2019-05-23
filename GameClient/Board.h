@@ -22,7 +22,7 @@ public:
 	void UpdateSlither(int id);
 	void UpdateSlithers();
 	void DrawBoard();
-	void DrawFood(sf::CircleShape food);
+
 	void Commands(Player* player);
 	sf::RenderWindow window;
 	sf::Vector2f playerMovement;

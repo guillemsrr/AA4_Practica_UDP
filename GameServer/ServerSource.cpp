@@ -129,10 +129,11 @@ int main()
 void PingThreadFunction()
 {
 	//sf::Clock clock;
-	sf::Packet pack;
+	sf::Packet packPing;
 
-	pack << static_cast<int>(Protocol::PING);
+	packPing << static_cast<int>(Protocol::PING);
 
+	sf::Packet packFood;
 	while (true)
 	{
 		//sf::Time t1 = clock.getElapsedTime();
@@ -140,7 +141,7 @@ void PingThreadFunction()
 		//{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
-				if (sock.send(pack, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
+				if (sock.send(packPing, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
 				{
 					std::cout << "Error sending PING to client with id: " << it->second->id << "and ip: " << it->second->ip.toString() << std::endl;
 				}
@@ -148,6 +149,37 @@ void PingThreadFunction()
 				{
 					it->second->numPings++;
 				}
+			}
+
+			//ERE LAYS THE CULPRIT
+			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+			{
+				packFood << static_cast<int>(Protocol::FOOD_UPDATE);
+
+				//tota la info del menjar:
+				//només els que té més aprop
+				std::vector<Food*> closeFood;
+
+				for (int i = 0; i < (int)foodVector.size(); i++)
+				{
+					if (Distance(it->second->bodyPositions[0], foodVector[i]->position) < minFoodDist)
+					{
+						closeFood.push_back(foodVector[i]);
+					}
+				}
+				//num foods:
+				packFood << static_cast<int>(closeFood.size());
+				for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
+				{
+					Food* food = *closeit;
+					//pack << food->id;
+					packFood << food->position.x;
+					packFood << food->position.y;
+					//pack << food->color; //no puc passar el color?
+				}
+
+				sock.send(packFood, it->second->ip, it->second->port);
+				packFood.clear();
 			}
 
 			//std::cout << "THREADS: PING going to sleep for " << PINGTIMER * 1000 << " Milliseconds." << std::endl;
@@ -233,9 +265,6 @@ void CriticPacketsManagerThreadFunction()
 void MovementControlThread()
 {
 	//sf::Clock clock;
-	sf::Packet pack;
-
-	pack << static_cast<int>(Protocol::MOVE);
 
 	while (true)
 	{
@@ -260,14 +289,14 @@ void MovementControlThread()
 
 void FoodUpdateThread()
 {
-	sf::Clock clock;
+	//sf::Clock clock;
 	sf::Packet pack;
 
 	while (true)
 	{
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > FOODUPDATETIMER)
-		{
+		//sf::Time t1 = clock.getElapsedTime();
+		//if (t1.asSeconds() > FOODUPDATETIMER)
+		//{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
 				pack << static_cast<int>(Protocol::FOOD_UPDATE);
@@ -299,10 +328,10 @@ void FoodUpdateThread()
 			}
 
 			//std::cout << "THREADS: FOOD going to sleep for " << FOODUPDATETIMER * 1000 << " Milliseconds." << std::endl;
-			//std::this_thread::sleep_for(std::chrono::milliseconds((int)(FOODUPDATETIMER * 1000)));
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(FOODUPDATETIMER * 1000)));
 			//std::cout << "THREADS: FOOD awakened" << std::endl;
-			clock.restart();
-		}
+			//clock.restart();
+		//}
 	}
 }
 
@@ -502,7 +531,7 @@ float GetRandomFloat()
 
 bool RandomPacketLost()
 {
-	return true;
+	//return true;
 
 	float f = GetRandomFloat();
 	//std::cout << "random float is: " << f << std::endl;

@@ -1,20 +1,15 @@
-<<<<<<< HEAD
-﻿  ClientProxy.cpp
-  GameServer.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameServer.exe
-=======
 ﻿  ServerSource.cpp
 d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(46): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(334): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(335): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(485): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(363): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(364): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(518): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
-d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(486): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(519): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
   GameServer.vcxproj -> D:\users\Bleinz\Documents\Slitherio\AA4_Practica_UDP\x64\Debug\GameServer.exe
->>>>>>> threadSleeps

@@ -90,6 +90,7 @@ int main()
 
 		if (RandomPacketLost())
 		{
+			//std::cout << "Reading package" << std::endl;
 			int num;
 			pack >> num;
 			switch (static_cast<Protocol>(num))
@@ -127,16 +128,16 @@ int main()
 
 void PingThreadFunction()
 {
-	sf::Clock clock;
+	//sf::Clock clock;
 	sf::Packet pack;
 
 	pack << static_cast<int>(Protocol::PING);
 
 	while (true)
 	{
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > PINGTIMER)
-		{
+		//sf::Time t1 = clock.getElapsedTime();
+		//if (t1.asSeconds() > PINGTIMER)
+		//{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
 				if (sock.send(pack, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
@@ -149,21 +150,24 @@ void PingThreadFunction()
 				}
 			}
 
-			clock.restart();
-		}
+			//std::cout << "THREADS: PING going to sleep for " << PINGTIMER * 1000 << " Milliseconds." << std::endl;
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(PINGTIMER * 1000)));
+			//std::cout << "THREADS: PING awakened " << std::endl;
+			//clock.restart();
+		//}
 	}
 }
 
 void DisconnectionCheckerThreadFunction()
 {
-	sf::Clock clock;
+	//sf::Clock clock;
 	sf::Packet pack;
 
 	while (true)
 	{
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > DISCONNECTTIMER)
-		{
+		//sf::Time t1 = clock.getElapsedTime();
+		//if (t1.asSeconds() > DISCONNECTTIMER)
+		//{
 			//std::cout << "Checking for disconnected players" << std::endl;
 			//Comprobar si el numPings supera el límite y enviar el DISCONNECTED a todos los demás clientes
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); /*++it*/)
@@ -196,43 +200,48 @@ void DisconnectionCheckerThreadFunction()
 					++it;
 				}
 			}
-			clock.restart();
-		}
+
+			//std::cout << "THREADS: DISCONNECT going to sleep for " << DISCONNECTTIMER * 1000 << " Milliseconds." << std::endl;
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(DISCONNECTTIMER * 1000)));
+			//std::cout << "THREADS: DISCONNECT awakened" << std::endl;
+			//clock.restart();
+		//}
 	}
 }
 
 void CriticPacketsManagerThreadFunction()
 {
-	sf::Clock clock;
+	//sf::Clock clock;
 
 	while (true)
 	{
-		sf::Time t1 = clock.getElapsedTime();
+		//sf::Time t1 = clock.getElapsedTime();
 
-		if (t1.asSeconds() > CRITICPACKETSTIMER)
-		{
+		//if (t1.asSeconds() > CRITICPACKETSTIMER)
+		//{
 			for (std::map<int, CriticPack*>::iterator it = criticPackets.begin(); it != criticPackets.end(); ++it)
 			{
 				sock.send(it->second->pack, it->second->ip, it->second->port);
 			}
 
-			clock.restart();
-		}
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(CRITICPACKETSTIMER * 1000)));
+			//clock.restart();
+		//}
 	}
 }
 
 void MovementControlThread()
 {
-	sf::Clock clock;
+	//sf::Clock clock;
 	sf::Packet pack;
 
 	pack << static_cast<int>(Protocol::MOVE);
 
 	while (true)
 	{
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > MOVEMENTUPDATETIMER)
-		{
+		//sf::Time t1 = clock.getElapsedTime();
+		//if (t1.asSeconds() > MOVEMENTUPDATETIMER)
+		//{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
 				if (abs(it->second->accumMovement.x) + abs(it->second->accumMovement.y) > 0)
@@ -240,8 +249,12 @@ void MovementControlThread()
 					MovementControl(it->second->id, it->second->lastIdMove);
 				}
 			}
-			clock.restart();
-		}
+
+			//std::cout << "THREADS: MOVEMENT going to sleep for " << MOVEMENTUPDATETIMER * 1000 << " Milliseconds." << std::endl;
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(MOVEMENTUPDATETIMER * 1000)));
+			//std::cout << "THREADS: MOVEMENT awakened" << std::endl;
+			//clock.restart();
+		//}
 	}
 }
 
@@ -285,6 +298,9 @@ void FoodUpdateThread()
 				pack.clear();
 			}
 
+			//std::cout << "THREADS: FOOD going to sleep for " << FOODUPDATETIMER * 1000 << " Milliseconds." << std::endl;
+			//std::this_thread::sleep_for(std::chrono::milliseconds((int)(FOODUPDATETIMER * 1000)));
+			//std::cout << "THREADS: FOOD awakened" << std::endl;
 			clock.restart();
 		}
 	}

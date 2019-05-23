@@ -91,6 +91,7 @@ void Board::Commands(Player* player)
 
 		if (left || right || up || down)
 		{
+			//std::cout << "Player moving" << std::endl;
 			bool sprint = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift);
 
 			sf::Vector2f mvDir = sf::Vector2f(0.f, 0.f);

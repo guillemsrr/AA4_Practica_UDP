@@ -1,4 +1,10 @@
 ﻿  ClientSource.cpp
+<<<<<<< HEAD
 G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\ClientSource.cpp(99,11): warning C4101:  'id': unreferenced local variable
 G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\ClientSource.cpp(246,11): warning C4101:  'id': unreferenced local variable
   GameClient.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameClient.exe
+=======
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(108): warning C4101: 'id': unreferenced local variable
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(223): warning C4101: 'id': unreferenced local variable
+  GameClient.vcxproj -> D:\users\Bleinz\Documents\Slitherio\AA4_Practica_UDP\x64\Debug\GameClient.exe
+>>>>>>> threadSleeps

@@ -184,23 +184,23 @@ int main()
 							sub.y = abs(sub.y);
 							if (sqrt(sub.x*sub.x + sub.y*sub.y) > tol)
 							{
-								std::cout << "Position modified!" << std::endl;
+								//std::cout << "Position modified!" << std::endl;
 								//std::cout << "movesMap y: "<< (float)movesMap[idMove].y << " head pos y " << (float)headPos.y << std::endl;
 
 								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
 								board.UpdateSlither(idPlayer);
 
 								accumMove = sf::Vector2f(0.0f, 0.0f);
-								bool x = (float)movesMap[idMove].x != (float)headPos.x;
+								/*bool x = (float)movesMap[idMove].x != (float)headPos.x;
 								bool y = ((float)movesMap[idMove].y != (float)headPos.y);
 								std::cout << "x bool: " << x << std::endl;
 								std::cout << "y bool: " << y << std::endl;
 								std::cout << "headPos: (x "<< headPos.x << " , y " << headPos.y << std::endl;
-								std::cout << "movesMap[idMove]: (x "<< movesMap[idMove].x << " , y " << movesMap[idMove].y << std::endl;
+								std::cout << "movesMap[idMove]: (x "<< movesMap[idMove].x << " , y " << movesMap[idMove].y << std::endl;*/
 							}
 							else
 							{
-								std::cout << "good position" << std::endl;
+								//std::cout << "good position" << std::endl;
 							}
 
 							//esborrem els moviments anteriors posant-los a toErase
@@ -215,7 +215,7 @@ int main()
 							{
 								movesMap.erase(toErase[0]);
 								toErase.erase(toErase.begin());
-								std::cout << "erasing" << std::endl;
+								//std::cout << "erasing" << std::endl;
 							}
 						}
 					}

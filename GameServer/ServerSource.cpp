@@ -72,8 +72,8 @@ int main()
 	InitializeFood();
 
 	//Thread de food
-	/*std::thread foodUpdateThread(&FoodUpdateThread);
-	foodUpdateThread.detach();*/
+	//std::thread foodUpdateThread(&FoodUpdateThread);
+	//foodUpdateThread.detach();
 
 	#pragma endregion
 
@@ -304,7 +304,6 @@ void FoodUpdateThread()
 				//tota la info del menjar:
 				//només els que té més aprop
 				std::vector<Food*> closeFood;
-
 				for (int i = 0; i < (int)foodVector.size(); i++)
 				{
 					if (Distance(it->second->bodyPositions[0], foodVector[i]->position) < minFoodDist)
@@ -500,6 +499,7 @@ void MovementControl(int idPlayer, int idMove)
 	pack << static_cast<int>(Protocol::MOVE);
 	pack << idPlayer;
 	pack << idMove;
+
 	clientProxies[idPlayer]->PutBodyPositions(&pack);
 
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
@@ -531,7 +531,7 @@ float GetRandomFloat()
 
 bool RandomPacketLost()
 {
-	//return true;
+	return true;
 
 	float f = GetRandomFloat();
 	//std::cout << "random float is: " << f << std::endl;

@@ -48,8 +48,11 @@ void Board::DrawBoard()
 	//paint foodballs:
 	for (int i = 0; i < (int)foodPositions.size(); i++)
 	{
-		foodShapeBuffer[i]->setPosition(foodPositions[i]);
-		window.draw(*foodShapeBuffer[i]);
+		if (i < (int)foodShapeBuffer.size())
+		{
+			foodShapeBuffer[i]->setPosition(foodPositions[i]);
+			window.draw(*foodShapeBuffer[i]);
+		}
 	}
 
 	//paint all players

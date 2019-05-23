@@ -60,8 +60,6 @@ int main()
 		}
 		else
 		{
-			//std::lock_guard<std::mutex> guard(mtx);
-
 			//std::cout << "Packet received" << std::endl;
 			if (ip == IP && port == PORT)//ES EL SERVER
 			{
@@ -164,7 +162,7 @@ int main()
 						
 						if (movesMap.find(idMove) != movesMap.end())//si existeix el idMove
 						{
-							//RECONCILIACI�:
+							//RECONCILIACIO:
 
 							//comprovem en quina posici� est�vem / estem, i si coincideix
 							int numPos;
@@ -234,8 +232,10 @@ int main()
 						break;
 					}
 
-					std::lock_guard<std::mutex> guard(mtx);
+					std::cout << "Food update before" << std::endl;
+					//std::lock_guard<std::mutex> guard(mtx);
 
+					std::cout << "Food update after" << std::endl;
 					//update food map
 
 					int numFood;
@@ -244,7 +244,6 @@ int main()
 					std::vector<sf::Vector2f> foodPositions;
 					for (int i = 0; i < numFood; i++)
 					{
-						int id;
 						sf::Vector2f pos;
 						pack >> pos.x;
 						pack >> pos.y;
@@ -253,6 +252,7 @@ int main()
 
 					board.foodPositions = foodPositions;
 					//std::cout << "foodPositions size: " << foodPositions.size() << std::endl;
+					std::cout << "Food update final" << std::endl;
 				}
 					break;
 				break;
@@ -307,7 +307,7 @@ void GraphicsInterface()
 	//crear el taulell amb les coordenades que ara ja tenim
 	for (std::map<int, Player*>::iterator it = playersMap.begin(); it != playersMap.end(); ++it)
 	{
-		std::lock_guard<std::mutex> guard(mtx);
+		//std::lock_guard<std::mutex> guard(mtx);
 
 		Player* player = it->second;
 		board.InitializeSlither(player);
@@ -316,7 +316,7 @@ void GraphicsInterface()
 	board.window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Slither Remake");
 	while (board.window.isOpen())
 	{
-		std::lock_guard<std::mutex> guard(mtx);
+		//std::lock_guard<std::mutex> guard(mtx);
 
 		board.DrawBoard();
 		board.Commands(m_player);

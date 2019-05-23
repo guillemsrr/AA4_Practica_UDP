@@ -8,6 +8,7 @@
 #include "Player.h"
 #include <mutex>
 #include "FoodBall.h"
+#include <chrono>
 
 //---------CLIENTE---------//
 
@@ -240,7 +241,7 @@ int main()
 
 void HelloSending()
 {
-	sf::Clock clock;
+	//sf::Clock clock;
 	sf::Packet pack;
 	std::string alias = "Default Alias";
 	pack << static_cast<int>(Protocol::HELLO);
@@ -248,9 +249,9 @@ void HelloSending()
 
 	while (!received)
 	{
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > helloSendingTimer)
-		{
+		//sf::Time t1 = clock.getElapsedTime();
+		//if (t1.asSeconds() > helloSendingTimer)
+		//{
 			if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
 			{
 				std::cout << "Error sending the packet" << std::endl;
@@ -259,8 +260,12 @@ void HelloSending()
 			{
 				std::cout << "HELLO enviado" << std::endl;
 			}
-			clock.restart();
-		}
+			//clock.restart();
+
+			//std::cout << "THREADS: HELLO going to sleep for " << helloSendingTimer * 1000 << " Milliseconds." << std::endl;
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * helloSendingTimer)));
+			//std::cout << "THREADS: HELLO awakened" << std::endl;
+		//}
 	}
 }
 
@@ -268,6 +273,7 @@ void GraphicsInterface()
 {
 	while (!received)
 	{
+		std::cout << "NOT STARTING YET" << std::endl;
 		//just don't start
 	}
 
@@ -291,12 +297,12 @@ void GraphicsInterface()
 		board.Commands(m_player);
 		accumMove += board.playerMovement;
 
-		////prediction movement:
-		//if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
-		//{
-		//	m_player->UpdatePosition(board.playerMovement);
-		//	board.UpdateSlither(m_player->id);
-		//}
+		//prediction movement:
+		if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
+		{
+			m_player->UpdatePosition(board.playerMovement);
+			board.UpdateSlither(m_player->id);
+		}
 
 		//draw foodballs:
 		/*for (std::map<int, FoodBall*>::iterator it = foodBallMap.begin(); it != foodBallMap.end(); ++it)
@@ -313,14 +319,14 @@ void MoveSending()
 		//just don't start
 	}
 
-	sf::Clock clock;
+	//sf::Clock clock;
 	sf::Packet pack;
 
 	while (true)
 	{
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > movementTimer)
-		{
+		//sf::Time t1 = clock.getElapsedTime();
+		//if (t1.asSeconds() > movementTimer)
+		//{
 			if (abs(accumMove.x) + abs(accumMove.y) > 0)
 			{
 				pack.clear();
@@ -339,9 +345,12 @@ void MoveSending()
 
 				accumMove = sf::Vector2f(0, 0);
 			}
-			
-			clock.restart();
-		}
+
+			//std::cout << "THREADS: MOVEMENT going to sleep for " << movementTimer * 1000 << " Milliseconds." << std::endl;
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(movementTimer * 1000)));
+			//std::cout << "THREADS: MOVEMENT awakened" << std::endl;
+			//clock.restart();
+		//}
 	}
 }
 
@@ -360,13 +369,13 @@ void InterpolatePositions()
 		//just don't start
 	}
 
-	sf::Clock clock;
+	//sf::Clock clock;
 
 	while (true)
 	{
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > interpolationTimer)
-		{
+		//sf::Time t1 = clock.getElapsedTime();
+		//if (t1.asSeconds() > interpolationTimer)
+		//{
 			std::vector<std::map<int, std::vector<sf::Vector2f>>::iterator> toErase;//vector per eliminar després
 			for (std::map<int, std::vector<sf::Vector2f>>::iterator it = interpolationsMap.begin(); it != interpolationsMap.end(); ++it)
 			{
@@ -387,7 +396,10 @@ void InterpolatePositions()
 				toErase.erase(toErase.begin());
 			}
 
-			clock.restart();
-		}
+			//std::cout << "THREADS: INTERP going to sleep for " << interpolationTimer * 1000 << " Milliseconds." << std::endl;
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(interpolationTimer * 1000)));
+			//std::cout << "THREADS: INTERP awakened" << std::endl;
+			//clock.restart();
+		//}
 	}
 }

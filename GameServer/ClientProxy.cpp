@@ -36,8 +36,9 @@ void ClientProxy::PutBodyPositions(sf::Packet* pack)
 	*pack << (int)bodyPositions.size();
 	for each (sf::Vector2f pos in bodyPositions)
 	{
-		*pack << pos.x;
-		*pack << pos.y;
+
+		*pack << (int)(pos.x*1000);
+		*pack << (int)(pos.y*1000);
 	}
 }
 

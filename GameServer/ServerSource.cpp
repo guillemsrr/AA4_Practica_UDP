@@ -393,8 +393,12 @@ void AccumMovement(sf::Packet pack)
 	int idPlayer;
 	int idMove;
 	pack >> idPlayer>>idMove;
+	int x, y;
+	pack >> x >> y;
+
 	sf::Vector2f sumPos;
-	pack >> sumPos.x >> sumPos.y;
+	sumPos.x = (float)x / 1000.f;
+	sumPos.y = (float)y / 1000.f;
 
 	clientProxies[idPlayer]->accumMovement += sumPos;//en comptes de tractar-lo directament, l'acumulo i es tractarà en el thread de moviment
 	clientProxies[idPlayer]->lastIdMove = idMove;
@@ -483,6 +487,7 @@ float GetRandomFloat()
 bool RandomPacketLost()
 {
 	return true;
+
 	float f = GetRandomFloat();
 	//std::cout << "random float is: " << f << std::endl;
 	if (f > PERCENT_PACKETLOSS)

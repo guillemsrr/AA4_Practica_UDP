@@ -9,18 +9,18 @@ public:
 	Player(sf::Packet* pack);
 	~Player();
 
-	float speed;
+	int speed;
 
 	void AddBodyPositions(sf::Packet* pack);
 	void UpdatePosition(sf::Packet* pack);
-	std::vector<sf::Vector2f> GetFuturePositions(sf::Packet* pack);
-	void UpdatePosition(sf::Vector2f headPos);
-	void UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Packet* pack);
-	bool InterpolateTo(std::vector<sf::Vector2f> finalBodyPositions, float percent);
+	std::vector<sf::Vector2i> GetFuturePositions(sf::Packet* pack);
+	void UpdatePosition(sf::Vector2i headPos);
+	void UpdateTheRestOfPositions(int numPos, sf::Vector2i headPos, sf::Packet* pack);
+	bool InterpolateTo(std::vector<sf::Vector2i> finalBodyPositions, int percent);
 
 private:
-	std::vector<sf::Vector2f> startBodyPositions;
-	float Magnitude(sf::Vector2f headPos);
+	std::vector<sf::Vector2i> startBodyPositions;
+	int Magnitude(sf::Vector2i headPos);
 
 };
 

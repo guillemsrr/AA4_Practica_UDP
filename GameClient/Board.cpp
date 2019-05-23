@@ -48,7 +48,7 @@ void Board::DrawBoard()
 	//paint foodballs:
 	for (int i = 0; i < (int)foodPositions.size(); i++)
 	{
-		foodShapeBuffer[i]->setPosition(foodPositions[i]);
+		foodShapeBuffer[i]->setPosition(sf::Vector2f(foodPositions[i].x, foodPositions[i].y));
 		window.draw(*foodShapeBuffer[i]);
 	}
 
@@ -70,7 +70,7 @@ void Board::Commands(Player* player)
 	float deltaTime = frameTimeClock.getElapsedTime().asSeconds();
 	frameTimeClock.restart();
 	sf::Event event;
-	playerMovement = sf::Vector2f(0, 0);
+	playerMovement = sf::Vector2i(0, 0);
 	//std::cout << "commands"<<std::endl;
 
 	while (window.pollEvent(event))
@@ -93,20 +93,20 @@ void Board::Commands(Player* player)
 		{
 			bool sprint = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift);
 
-			sf::Vector2f mvDir = sf::Vector2f(0.f, 0.f);
+			sf::Vector2i mvDir = sf::Vector2i(0, 0);
 
-			mvDir.x += (right ? 1.f : 0.f) - (left ? 1.f : 0.f);
-			mvDir.y += (down ? 1.f : 0.f) - (up ? 1.f : 0.f);
+			mvDir.x += (right ? 1 : 0) - (left ? 1 : 0);
+			mvDir.y += (down ? 1 : 0) - (up ? 1: 0);
 
 
-			sf::Vector2f zero = sf::Vector2f(0.f, 0.f);
-			sf::Vector2f v = zero - mvDir;
-			float dist = sqrt(v.x*v.x + v.y*v.y);
-			mvDir /= dist;
+			sf::Vector2i zero = sf::Vector2i(0, 0);
+			sf::Vector2i v = zero - mvDir;
+			int dist = (int)sqrt(v.x*v.x + v.y*v.y);
+			mvDir /= dist; 
 
 			//std::cout << "Player movement: " << mvDir.x << ", " << mvDir.y << std::endl;
 			//std::cout << "Bools: right - " << right << ", left - " << left << ", up - " << up << ", down - " << down << std::endl;
-			playerMovement += mvDir * (sprint ? 2.f : 1.f) * player->speed * deltaTime;
+			playerMovement += mvDir * (sprint ? 2 : 1) * player->speed;// *(int)deltaTime;
 		}
 	}	
 }

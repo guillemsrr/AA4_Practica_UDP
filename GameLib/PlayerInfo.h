@@ -10,16 +10,16 @@ class PlayerInfo
 {
 public:
 	PlayerInfo();
-	PlayerInfo(int id, std::string alias, float x, float y, sf::Color _color);
+	PlayerInfo(int id, std::string alias, int x, int y, sf::Color _color);
 	~PlayerInfo();
 
 	int id;
 	std::string alias;
-	std::vector<sf::Vector2f> bodyPositions;
+	std::vector<sf::Vector2i> bodyPositions;
 	sf::Color color;
-	sf::Vector2f direction;
+	sf::Vector2i direction;
 
-	float PlayerInfo::Distance(sf::Vector2f v1, sf::Vector2f v2);
-	void PlayerInfo::Normalize(sf::Vector2f& vec);
+	int PlayerInfo::Distance(sf::Vector2i v1, sf::Vector2i v2);
+	void PlayerInfo::Normalize(sf::Vector2i& vec);
 };
 

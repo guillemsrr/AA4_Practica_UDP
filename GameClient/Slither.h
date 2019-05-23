@@ -16,9 +16,9 @@ public:
 
 private:
 	Player* player;
-	float radius;
-	const float radiusCirclesRelation = 1.f;
+	int radius;
+	const int radiusCirclesRelation = 1;
 	void UpdateRadius();
-	void CreateBodyCircle(sf::Vector2f pos);
+	void CreateBodyCircle(sf::Vector2i pos);
 };
 

@@ -2,7 +2,7 @@
 
 
 
-FoodBall::FoodBall(int _id, sf::Vector2f _pos)
+FoodBall::FoodBall(int _id, sf::Vector2i _pos)
 {
 	id = _id;
 	position = _pos;

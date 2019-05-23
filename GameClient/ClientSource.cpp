@@ -19,11 +19,11 @@ int actualMoveID = 0;
 
 //maps:
 std::map<int, Player*> playersMap;
-std::map<int, sf::Vector2f> movesMap;//idMove i headPos
-std::map<int, std::vector<sf::Vector2f>> interpolationsMap;
+std::map<int, sf::Vector2i> movesMap;//idMove i headPos
+std::map<int, std::vector<sf::Vector2i>> interpolationsMap;
 
 Player* m_player;
-sf::Vector2f accumMove;
+sf::Vector2i accumMove;
 Board board;
 
 //timers:
@@ -100,12 +100,12 @@ int main()
 					pack >> numFood;
 					std::cout << "num balls: " << numFood << std::endl;
 
-					std::vector<sf::Vector2f> foodPositions;
+					std::vector<sf::Vector2i> foodPositions;
 
 					for (int i = 0; i < numFood; i++)
 					{
 						int id;
-						sf::Vector2f pos;
+						sf::Vector2i pos;
 						pack >> pos.x;
 						pack >> pos.y;
 						foodPositions.push_back(pos);
@@ -158,7 +158,7 @@ int main()
 					if (idPlayer == m_player->id)
 					{
 						//vector on posem els moviments que volem esborrar
-						std::vector<std::map<int, sf::Vector2f>::iterator> toErase;
+						std::vector<std::map<int, sf::Vector2i>::iterator> toErase;
 						
 						if (movesMap.find(idMove) != movesMap.end())//si existeix el idMove
 						{
@@ -166,16 +166,16 @@ int main()
 
 							//comprovem en quina posició estàvem / estem, i si coincideix
 							int numPos;
-							sf::Vector2f headPos;
+							sf::Vector2i headPos;
 							pack >> numPos;
 							pack >> headPos.x;
 							pack >> headPos.y;
 
-							float tol = 0.01f;
-							sf::Vector2f sub = movesMap[idMove] - headPos;
+							int tol = 1;
+							sf::Vector2i sub = movesMap[idMove] - headPos;
 							sub.x = abs(sub.x);
 							sub.y = abs(sub.y);
-							if (sqrt(sub.x*sub.x + sub.y*sub.y) > tol)
+							if ((int)sqrt(sub.x*sub.x + sub.y*sub.y) > tol)
 							//if (((int)movesMap[idMove].x != (int)headPos.x) || ((int)movesMap[idMove].y != (int)headPos.y))
 							{
 								std::cout << "Position modified!" << std::endl;
@@ -184,12 +184,8 @@ int main()
 								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
 								board.UpdateSlither(idPlayer);
 
-								accumMove = sf::Vector2f(0.0f, 0.0f);
-								bool x = (float)movesMap[idMove].x != (float)headPos.x;
-								bool y = ((float)movesMap[idMove].y != (float)headPos.y);
-								std::cout << "x bool: " << x << std::endl;
-								std::cout << "y bool: " << y << std::endl;
-								std::cout << "headPos: (x "<< headPos.x << " , y " << headPos.y << std::endl;
+								accumMove = sf::Vector2i(0, 0);
+
 								std::cout << "movesMap[idMove]: (x "<< movesMap[idMove].x << " , y " << movesMap[idMove].y << std::endl;
 							}
 							else
@@ -198,7 +194,7 @@ int main()
 							}
 
 							//esborrem els moviments anteriors posant-los a toErase
-							for (std::map<int, sf::Vector2f>::iterator it = movesMap.begin(); it != movesMap.end(); ++it)
+							for (std::map<int, sf::Vector2i>::iterator it = movesMap.begin(); it != movesMap.end(); ++it)
 							{
 								if (it->first < idMove)
 								{
@@ -235,11 +231,11 @@ int main()
 					int numFood;
 					pack >> numFood;
 					//std::cout << "num balls: " << numFood << std::endl;
-					std::vector<sf::Vector2f> foodPositions;
+					std::vector<sf::Vector2i> foodPositions;
 					for (int i = 0; i < numFood; i++)
 					{
 						int id;
-						sf::Vector2f pos;
+						sf::Vector2i pos;
 						pack >> pos.x;
 						pack >> pos.y;
 						foodPositions.push_back(pos);
@@ -291,7 +287,7 @@ void GraphicsInterface()
 		//just don't start
 	}
 
-	accumMove = sf::Vector2f(0,0);
+	accumMove = sf::Vector2i(0,0);
 
 	//crear el taulell amb les coordenades que ara ja tenim
 	for (std::map<int, Player*>::iterator it = playersMap.begin(); it != playersMap.end(); ++it)
@@ -351,7 +347,7 @@ void MoveSending()
 					std::cout << "Error sending the packet" << std::endl;
 				}
 
-				accumMove = sf::Vector2f(0, 0);
+				accumMove = sf::Vector2i(0, 0);
 			}
 			
 			clock.restart();
@@ -381,8 +377,8 @@ void InterpolatePositions()
 		sf::Time t1 = clock.getElapsedTime();
 		if (t1.asSeconds() > interpolationTimer)
 		{
-			std::vector<std::map<int, std::vector<sf::Vector2f>>::iterator> toErase;//vector per eliminar després
-			for (std::map<int, std::vector<sf::Vector2f>>::iterator it = interpolationsMap.begin(); it != interpolationsMap.end(); ++it)
+			std::vector<std::map<int, std::vector<sf::Vector2i>>::iterator> toErase;//vector per eliminar després
+			for (std::map<int, std::vector<sf::Vector2i>>::iterator it = interpolationsMap.begin(); it != interpolationsMap.end(); ++it)
 			{
 				if (playersMap[it->first]->InterpolateTo(it->second, 0.5f))
 				{

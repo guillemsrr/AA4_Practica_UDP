@@ -25,9 +25,9 @@ public:
 
 	void Commands(Player* player);
 	sf::RenderWindow window;
-	sf::Vector2f playerMovement;
+	sf::Vector2i playerMovement;
 	std::map<int, Slither*> slithersMap;//key is idPlayer
-	std::vector<sf::Vector2f> foodPositions;
+	std::vector<sf::Vector2i> foodPositions;
 	std::vector<sf::CircleShape*> foodShapeBuffer;
 
 private:

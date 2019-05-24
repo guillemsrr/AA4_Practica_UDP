@@ -40,15 +40,10 @@ void Player::UpdatePosition(sf::Packet* pack)
 {
 	int numPos;
 	*pack >> numPos;
-	int difference = numPos - (int)bodyPositions.size();
-	if (difference > 0)
+	
+	while (numPos > (int)bodyPositions.size())
 	{
-		//add new positions, just initialized
-		for (int i = 0; i < difference; i++)
-		{
-			sf::Vector2f pos(0.f, 0.f);
-			bodyPositions.push_back(pos);
-		}
+		CreateBodyPosition();
 	}
 
 	for (int i = 0; i < bodyPositions.size(); i++)
@@ -60,34 +55,40 @@ void Player::UpdatePosition(sf::Packet* pack)
 
 std::vector<sf::Vector2f> Player::GetFuturePositions(sf::Packet* pack)
 {
+	//std::cout << "GetFuturePositions before" << std::endl;
 	int numPos;
 	*pack >> numPos;
+
+	while (numPos > (int)bodyPositions.size())
+	{
+		CreateBodyPosition();
+	}
+
 	std::vector<sf::Vector2f> futureBodyPositions;
 
 	for (int i = 0; i < numPos; i++)
 	{
 		sf::Vector2f newPos;
-		*pack >> newPos.x;
-		*pack >> newPos.y;
+		int x, y;
+		*pack >> x;
+		*pack >> y;
+		newPos.x = (float)x / 1000.f;
+		newPos.y = (float)y / 1000.f;
 		futureBodyPositions.push_back(newPos);
 	}
 
 	startBodyPositions = bodyPositions;
+
+	//std::cout << "GetFuturePositions after" << std::endl;
 
 	return futureBodyPositions;
 }
 
 void Player::UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Packet* pack)
 {
-	int difference = numPos - (int)bodyPositions.size();
-	if (difference > 0)
+	while (numPos > (int)bodyPositions.size())
 	{
-		//add new positions, just initialized
-		for (int i = 0; i < difference; i++)
-		{
-			sf::Vector2f pos(0.f, 0.f);
-			bodyPositions.push_back(pos);
-		}
+		CreateBodyPosition();
 	}
 
 	bodyPositions[0] = headPos;
@@ -100,7 +101,6 @@ void Player::UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Pack
 
 		bodyPositions[i].x = (float)x / 1000.f;
 		bodyPositions[i].y = (float)y / 1000.f;
-
 	}
 }
 
@@ -115,7 +115,9 @@ void Player::UpdatePosition(sf::Vector2f move)
 		sf::Vector2f dir = bodyPositions[i] - bodyPositions[i - 1];
 		Normalize(dir);
 		bodyPositions[i] = bodyPositions[i - 1] + dir * 10.f;
+		//std::cout << "update position to "<< bodyPositions[i].x << " " << bodyPositions[i].y<< std::endl;
 	}
+
 
 	/*for (int i = (int)bodyPositions.size() - 1; i > 0; i--)
 	{

@@ -19,7 +19,14 @@ public:
 	sf::Color color;
 	sf::Vector2f direction;
 
-	float PlayerInfo::Distance(sf::Vector2f v1, sf::Vector2f v2);
-	void PlayerInfo::Normalize(sf::Vector2f& vec);
+	float Distance(sf::Vector2f v1, sf::Vector2f v2);
+	void Normalize(sf::Vector2f& vec);
+	void CreateBodyPosition();
+	const float separation = 10.0f;
+
+	int currentFood;
+	const int foodToGrow = 3;
+	bool dead;
+
 };
 

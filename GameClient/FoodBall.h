@@ -5,7 +5,7 @@ class FoodBall :
 	public Food
 {
 public:
-	FoodBall(int _id, sf::Vector2f pos);
+	FoodBall(sf::Vector2f pos);
 	~FoodBall();
 
 	sf::CircleShape circleShape;

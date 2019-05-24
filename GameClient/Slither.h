@@ -13,6 +13,7 @@ public:
 	bool DetectCollision(Slither* enemy);
 
 	std::vector<sf::CircleShape> bodyCircles;
+	bool IsPlayerDead();
 
 private:
 	Player* player;

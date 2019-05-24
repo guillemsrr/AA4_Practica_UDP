@@ -9,6 +9,7 @@
 #include "Player.h"
 #include "Slither.h"
 #include "FoodBall.h"
+#include <mutex>
 
 
 class Board
@@ -21,7 +22,7 @@ public:
 	void InitializeSlither(Player* player);
 	void UpdateSlither(int id);
 	void UpdateSlithers();
-	void DrawBoard();
+	void DrawBoard(std::mutex& mtx);
 
 	void Commands(Player* player);
 	sf::RenderWindow window;

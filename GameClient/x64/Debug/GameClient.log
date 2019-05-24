@@ -1,3 +1,6 @@
-﻿  ClientSource.cpp
-G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\GameClient\ClientSource.cpp(98,11): warning C4101:  'id': unreferenced local variable
-  GameClient.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameClient.exe
+﻿  Board.cpp
+  FoodBall.cpp
+  ClientSource.cpp
+c:\users\guillemserralorenz\documents\aa4_practica_udp\gameclient\clientsource.cpp(99): warning C4101: 'id': unreferenced local variable
+  Generating Code...
+  GameClient.vcxproj -> C:\Users\guillemserralorenz\Documents\AA4_Practica_UDP\x64\Debug\GameClient.exe

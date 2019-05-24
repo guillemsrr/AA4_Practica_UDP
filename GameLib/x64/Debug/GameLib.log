@@ -1,1 +1,4 @@
-﻿  GameLib.vcxproj -> G:\GUILLEM\Documents\__ENTI\Xarxes2_folder\AA4_Practica_UDP\x64\Debug\GameLib.lib
+﻿  Food.cpp
+  GameLib.vcxproj -> C:\Users\guillemserralorenz\Documents\AA4_Practica_UDP\x64\Debug\GameLib.lib
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Common.CurrentVersion.targets(4259,5): warning MSB3026: Could not copy "x64\Debug\GameLib.pdb" to "C:\Users\guillemserralorenz\Documents\AA4_Practica_UDP\x64\Debug\GameLib.pdb". Beginning retry 1 in 1000ms. La operación solicitada no se puede realizar en un archivo con una sección asignada a usuario abierta.
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Common.CurrentVersion.targets(4259,5): warning MSB3026:  

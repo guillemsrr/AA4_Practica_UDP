@@ -19,9 +19,27 @@ Slither::~Slither()
 
 void Slither::UpdateSlitherPosition()
 {
-	for(int i = 0; i< bodyCircles.size(); i++)
+	//std::
+	for (int i = (int)bodyCircles.size(); i < (int)player->bodyPositions.size(); i++)
 	{
-		bodyCircles[i].setPosition(player->bodyPositions[i]);
+		CreateBodyCircle(player->bodyPositions[i]);
+	}
+
+	//std::cout << "bodyCircles size: " << (int)bodyCircles.size() << std::endl;
+	//std::cout << "(int)player->bodyPositions.size(): " << (int)player->bodyPositions.size() << std::endl;
+
+	for(int i = 0; i< player->bodyPositions.size(); i++)
+	{
+		if ((int)bodyCircles.size() == (int)player->bodyPositions.size())
+		{
+			bodyCircles[i].setPosition(player->bodyPositions[i]);
+		}
+		else
+		{
+			std::cout << "ERROR: bodyCircles.size() != bodyPositions.size() " << std::endl;
+			std::cout << "bodyCircles size: " << (int)bodyCircles.size() << std::endl;
+			std::cout << "(int)player->bodyPositions.size(): " << (int)player->bodyPositions.size() << std::endl;
+		}
 	}
 }
 
@@ -42,4 +60,9 @@ void Slither::CreateBodyCircle(sf::Vector2f pos)
 	shape.setOrigin(shape.getRadius() / 2.f, shape.getRadius() / 2.f);
 	shape.setPosition(pos);
 	bodyCircles.push_back(shape);
+}
+
+bool Slither::IsPlayerDead()
+{
+	return player->dead;
 }

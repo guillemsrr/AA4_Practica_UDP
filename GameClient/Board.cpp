@@ -1,7 +1,5 @@
 #include "Board.h"
 
-
-
 Board::Board()
 {
 	for (int i = 0; i < 100; i++)
@@ -41,27 +39,41 @@ void Board::UpdateSlither(int id)
 }
 
 
-void Board::DrawBoard()
+void Board::DrawBoard(std::mutex& mtx)
 {
 	window.clear();
 
+	//std::cout << "Draw food: " << (int)foodPositions.size() << ", " << (int)foodShapeBuffer.size() << "; ";
 	//paint foodballs:
-	for (int i = 0; i < (int)foodPositions.size(); i++)
+	if (true)
 	{
-		if (i < (int)foodShapeBuffer.size())
-		{
-			foodShapeBuffer[i]->setPosition(foodPositions[i]);
-			window.draw(*foodShapeBuffer[i]);
+		std::lock_guard<std::mutex> guard(mtx);
+		for (int i = 0; i < (int)foodPositions.size(); i++)
+		{		
+			if (i < (int)foodShapeBuffer.size())
+			{
+				//std::cout << "(" << i << ", ";
+				sf::CircleShape* circle = foodShapeBuffer[i];
+				//std::cout << "ok, ";
+				circle->setPosition(foodPositions[i]);
+				//std::cout << "ok)";
+				foodShapeBuffer[i]->setPosition(foodPositions[i]);
+				window.draw(*foodShapeBuffer[i]);
+			}
 		}
+		//std::cout << std::endl;
 	}
 
 	//paint all players
 	for (std::map<int, Slither*>::iterator it = slithersMap.begin(); it != slithersMap.end(); ++it)
 	{
 		Slither* slither = it->second;
-		for each (sf::CircleShape circle in slither->bodyCircles)
+		if (!slither->IsPlayerDead())
 		{
-			window.draw(circle);
+			for (int i = 0; i < (int)slither->bodyCircles.size(); ++i)
+			{
+				window.draw(slither->bodyCircles[i]);
+			}
 		}
 	}
 

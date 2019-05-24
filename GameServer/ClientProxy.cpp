@@ -9,7 +9,7 @@ ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigne
 	port = _port;
 	numPings = 0;
 	CreateInitialBodyPositions(headPos);
-	accumMovement = sf::Vector2f(0,0);
+	accumMovement = sf::Vector2f(0.f,0.f);
 }
 
 ClientProxy::~ClientProxy()
@@ -54,10 +54,13 @@ sf::Vector2f ClientProxy::SumToHeadPosition()
 	return bodyPositions[0] + accumMovement;
 }
 
-void ClientProxy::CreateBodyPosition()
+void ClientProxy::EatBall()
 {
-	sf::Vector2f pos = bodyPositions.back();
-	bodyPositions.push_back(pos);
+	if (currentFood == foodToGrow - 1)
+	{
+		CreateBodyPosition();
+	}
+	currentFood = (currentFood + 1) % foodToGrow;
 }
 
 void ClientProxy::UpdatePosition(sf::Vector2f headPos)

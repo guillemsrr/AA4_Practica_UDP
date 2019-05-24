@@ -15,7 +15,8 @@
 
 sf::UdpSocket sock;
 bool received = false;
-std::mutex mtx;
+std::mutex mtx_food;
+std::mutex mtx_bodies;
 int actualMoveID = 0;
 
 //maps:
@@ -102,7 +103,11 @@ int main()
 						foodPositions.push_back(pos);
 					}
 
-					board.foodPositions = foodPositions;//aix� s'hauria de millorar..
+					if (true)
+					{
+						std::lock_guard<std::mutex> guard(mtx_food);
+						board.foodPositions = foodPositions;//aix� s'hauria de millorar..
+					}
 
 					received = true;
 
@@ -157,13 +162,14 @@ int main()
 
 					if (idPlayer == m_player->id)
 					{
+						//std::cout << "dentro idPlayer == m_player->id" << std::endl;
 						//vector on posem els moviments que volem esborrar
 						std::vector<std::map<int, sf::Vector2f>::iterator> toErase;
 						
 						if (movesMap.find(idMove) != movesMap.end())//si existeix el idMove
 						{
 							//RECONCILIACIO:
-
+							//std::cout << "reconciliacio" << std::endl;
 							//comprovem en quina posici� est�vem / estem, i si coincideix
 							int numPos;
 							int x, y;
@@ -174,7 +180,6 @@ int main()
 							sf::Vector2f headPos;
 							headPos.x = (float)x / 1000.f;
 							headPos.y = (float)y / 1000.f;
-
 
 							float tol = 1;// sqrt(2) / 10.f;
 							sf::Vector2f sub = movesMap[idMove] - headPos;
@@ -196,11 +201,19 @@ int main()
 								std::cout << "headPos: (x "<< headPos.x << " , y " << headPos.y << std::endl;
 								std::cout << "movesMap[idMove]: (x "<< movesMap[idMove].x << " , y " << movesMap[idMove].y << std::endl;*/
 							}
+							else if (numPos > (int)m_player->bodyPositions.size())
+							{
+								while (numPos > (int)m_player->bodyPositions.size())
+								{
+									m_player->CreateBodyPosition();
+								}
+								board.UpdateSlither(idPlayer);
+							}
 							else
 							{
 								//std::cout << "good position" << std::endl;
 							}
-
+							//std::cout << "after" << std::endl;
 							//esborrem els moviments anteriors posant-los a toErase
 							for (std::map<int, sf::Vector2f>::iterator it = movesMap.begin(); it != movesMap.end(); ++it)
 							{
@@ -209,6 +222,7 @@ int main()
 									toErase.push_back(it);
 								}
 							}
+
 							while ((int)toErase.size() != 0)
 							{
 								movesMap.erase(toErase[0]);
@@ -216,6 +230,8 @@ int main()
 								//std::cout << "erasing" << std::endl;
 							}
 						}
+
+						//std::cout << "body positions: " << (int)m_player->bodyPositions.size() << std::endl;
 					}
 					else
 					{
@@ -232,10 +248,8 @@ int main()
 						break;
 					}
 
-					std::cout << "Food update before" << std::endl;
 					//std::lock_guard<std::mutex> guard(mtx);
 
-					std::cout << "Food update after" << std::endl;
 					//update food map
 
 					int numFood;
@@ -249,10 +263,39 @@ int main()
 						pack >> pos.y;
 						foodPositions.push_back(pos);
 					}
-
-					board.foodPositions = foodPositions;
+					
+					if (true)
+					{
+						std::lock_guard<std::mutex> guard(mtx_food);
+						board.foodPositions = foodPositions;
+					}
 					//std::cout << "foodPositions size: " << foodPositions.size() << std::endl;
-					std::cout << "Food update final" << std::endl;
+				}
+					break;
+
+				case KILL:
+				{
+					int idPlayer;
+					pack >> idPlayer;
+
+					if (idPlayer == m_player->id)//myself
+					{
+						//std::lock_guard<std::mutex> guard(mtx_bodies);
+						//m_player->bodyPositions.clear();
+						//board.UpdateSlither(idPlayer);
+						m_player->dead = true;
+
+						std::cout << "YOU DIED" << std::endl;
+					}
+					else//other player killed
+					{
+						//std::lock_guard<std::mutex> guard(mtx_bodies);
+						//playersMap[idPlayer]->bodyPositions.clear();
+						//board.UpdateSlither(idPlayer);
+						playersMap[idPlayer]->dead = true;
+
+						std::cout << "PLAYER KILLED" << std::endl;
+					}
 				}
 					break;
 				break;
@@ -318,7 +361,7 @@ void GraphicsInterface()
 	{
 		//std::lock_guard<std::mutex> guard(mtx);
 
-		board.DrawBoard();
+		board.DrawBoard(mtx_food);
 		board.Commands(m_player);
 
 		sf::Vector2i sumInt = sf::Vector2i((int)(board.playerMovement.x*1000), (int)(board.playerMovement.y*1000));
@@ -385,6 +428,7 @@ void SendAcknowledge(int idPack)
 	pack << static_cast<int>(Protocol::ACK);
 	pack << idPack;
 	sock.send(pack, IP, PORT);
+	std::cout << "ack sent" << std::endl;
 }
 
 void InterpolatePositions()

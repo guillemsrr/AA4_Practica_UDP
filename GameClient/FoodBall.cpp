@@ -2,9 +2,8 @@
 
 
 
-FoodBall::FoodBall(int _id, sf::Vector2f _pos)
+FoodBall::FoodBall(sf::Vector2f _pos)
 {
-	id = _id;
 	position = _pos;
 
 	circleShape =  sf::CircleShape(radius);

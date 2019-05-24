@@ -22,11 +22,8 @@ public:
 	void AddDataToPacket(sf::Packet* pack);
 
 	sf::Vector2f SumToHeadPosition();
-	void CreateBodyPosition();
+	void EatBall();
 	void UpdatePosition(sf::Vector2f headPos);
 	int lastIdMove;
-
-private:
-	const float separation = 10.0f;
 };
 

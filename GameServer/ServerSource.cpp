@@ -37,6 +37,7 @@ void MovementControl(int idPlayer, int idMove);
 void InitializeFood();
 bool RandomPacketLost();
 float Distance(sf::Vector2f v1, sf::Vector2f v2);
+void PlayerCollisionCheck(int idPlayer);
 
 
 int main()
@@ -444,15 +445,20 @@ void AccumMovement(sf::Packet pack)
 	sumPos.x = (float)x / 1000.f;
 	sumPos.y = (float)y / 1000.f;
 
+	std::cout << "accummovement before" << std::endl;
+	std::cout << "idPlayer: "<<idPlayer << std::endl;
+	std::cout << "contains: "<< bool(clientProxies.find(idPlayer)!=clientProxies.end()) << std::endl;
+	std::cout << "accummovement: " << clientProxies[idPlayer]->accumMovement.x << " " << clientProxies[idPlayer]->accumMovement.y <<std::endl;
 	clientProxies[idPlayer]->accumMovement += sumPos;//en comptes de tractar-lo directament, l'acumulo i es tractarà en el thread de moviment
 	clientProxies[idPlayer]->lastIdMove = idMove;
+	std::cout << "accummovement after" << std::endl;
 }
 
-void FoodCollisionCheck(std::vector<sf::Vector2f> playerPositions, float playerBodyRadius)
+void FoodCollisionCheck(int pID, std::vector<sf::Vector2f> playerPositions, float playerBodyRadius)
 {
 	int i = 0;
 	//std::cout << "Food vector size: " << (int)foodVector.size() << std::endl;
-	while (i < (int)foodVector.size())
+	while (i < (int)foodVector.size() - 1)
 	{
 		bool collided = false;
 		for (int j = 0; j < (int)playerPositions.size(); j++)
@@ -463,11 +469,12 @@ void FoodCollisionCheck(std::vector<sf::Vector2f> playerPositions, float playerB
 				break;
 			}
 		}
-
 		if (/*Collision*/collided)
 		{
 			//Food eaten
 			foodVector.erase(foodVector.begin() + i);//comprovar que funcioni
+
+			clientProxies[pID]->EatBall();
 		}
 		else
 		{
@@ -502,12 +509,16 @@ void MovementControl(int idPlayer, int idMove)
 
 	clientProxies[idPlayer]->PutBodyPositions(&pack);
 
+	std::cout << "body positions: " << (int)clientProxies[idPlayer]->bodyPositions.size() << std::endl;
+
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
 		sock.send(pack, it->second->ip, it->second->port);
 	}
 
-	FoodCollisionCheck(clientProxies[idPlayer]->bodyPositions, 13.f);//13 provisional
+	FoodCollisionCheck(idPlayer, clientProxies[idPlayer]->bodyPositions, 13.f);//13 provisional
+	PlayerCollisionCheck(idPlayer);
+	//std::cout << "movement control" << std::endl;
 }
 
 void InitializeFood()
@@ -517,7 +528,7 @@ void InitializeFood()
 		sf::Vector2f pos;
 		pos.x = rand() % SCREEN_WIDTH;
 		pos.y = rand() % SCREEN_HEIGHT;
-		foodVector.push_back(new Food(i, pos));
+		foodVector.push_back(new Food(pos));
 	}
 }
 
@@ -547,4 +558,49 @@ float Distance(sf::Vector2f v1, sf::Vector2f v2)
 {
 	sf::Vector2f v = v2 - v1;
 	return sqrt(v.x*v.x + v.y*v.y);
+}
+
+void PlayerCollisionCheck(int idPlayer)
+{
+	bool kill = false;
+	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+	{
+		if (it->first != idPlayer && !it->second->dead)
+		{
+			for (int i = 0; i < (int)it->second->bodyPositions.size(); i++)
+			{
+				if (Distance(clientProxies[idPlayer]->bodyPositions[0], it->second->bodyPositions[i]) <13.f)
+				{
+					std::cout << "collisioned" << std::endl;
+					kill = true;
+					break;
+				}
+			}
+		}
+	}
+
+	if (kill)
+	{
+		//spawn balls
+		for (int i = 0; i < (int)clientProxies[idPlayer]->bodyPositions.size(); i++)
+		{
+			Food* food = new Food(clientProxies[idPlayer]->bodyPositions[i]);
+			foodVector.push_back(food);
+		}
+
+		sf::Packet pack;
+		pack << Protocol::KILL;
+		pack << idPlayer;
+
+		for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+		{
+			if (sock.send(pack, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
+			{
+				//error
+			}
+		}
+		
+		//clientProxies.erase(idPlayer);
+		clientProxies[idPlayer]->dead = true;
+	}
 }

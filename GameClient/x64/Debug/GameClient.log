@@ -1,3 +1,53 @@
 ﻿  ClientSource.cpp
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(122): warning C4101: 'id': variable local sin referencia
-  GameClient.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameClient.exe
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(145): warning C4101: 'id': unreferenced local variable
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(642): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(644): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(649): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(654): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(659): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(664): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(669): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(674): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(679): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameclient\clientsource.cpp(697): warning C4244: 'argument': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=int
+          ]
+  GameClient.vcxproj -> D:\users\Bleinz\Documents\Slitherio\AA4_Practica_UDP\x64\Debug\GameClient.exe

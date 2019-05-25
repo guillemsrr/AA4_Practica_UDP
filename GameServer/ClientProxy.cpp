@@ -1,11 +1,10 @@
 #include "ClientProxy.h"
 
 
-ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigned short _port, sf::Vector2f headPos)
+ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigned short _port, sf::Vector2f headPos) :
+	PlayerInfo(_id, _alias, headPos.x, headPos.y, SkinColors::DEFAULT)
 {
-	appId = _id;
 	queryId = 0;
-	alias = _alias;
 	ip = _ip;
 	port = _port;
 	numPings = 0;
@@ -41,7 +40,6 @@ void ClientProxy::PutBodyPositions(sf::Packet* pack)
 	*pack << (int)bodyPositions.size();
 	for each (sf::Vector2f pos in bodyPositions)
 	{
-
 		*pack << (int)(pos.x*1000);
 		*pack << (int)(pos.y*1000);
 	}
@@ -51,6 +49,7 @@ void ClientProxy::AddDataToPacket(sf::Packet* pack)
 {
 	*pack << appId;
 	*pack << alias;
+	*pack << static_cast<int>(skinColor);
 	PutBodyPositions(pack);
 }
 

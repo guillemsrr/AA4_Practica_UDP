@@ -6,9 +6,12 @@ Slither::Slither(Player* _player)
 {
 	player = _player;
 	UpdateRadius();
+	bool flag = true;
 	for each (sf::Vector2f  pos in player->bodyPositions)
 	{
-		CreateBodyCircle(pos);
+		CreateBodyCircle(pos, flag);
+		if (flag)
+			flag = false;
 	}
 }
 
@@ -22,7 +25,7 @@ void Slither::UpdateSlitherPosition()
 	//std::
 	for (int i = (int)bodyCircles.size(); i < (int)player->bodyPositions.size(); i++)
 	{
-		CreateBodyCircle(player->bodyPositions[i]);
+		CreateBodyCircle(player->bodyPositions[i], i == 0);
 	}
 
 	//std::cout << "bodyCircles size: " << (int)bodyCircles.size() << std::endl;
@@ -50,13 +53,20 @@ bool Slither::DetectCollision(Slither* enemy)
 
 void Slither::UpdateRadius()
 {
-	radius = 10.f + player->bodyPositions.size() * radiusCirclesRelation;
+	std::cout << "Radius: " << (int)player->bodyPositions.size() << std::endl;
+	radius = 10.f + (int)player->bodyPositions.size() * radiusCirclesRelation;
 }
 
-void Slither::CreateBodyCircle(sf::Vector2f pos)
+void Slither::CreateBodyCircle(sf::Vector2f pos, bool isHead)
 {
 	sf::CircleShape shape(radius);
-	shape.setFillColor(player->color);
+	sf::Color color;
+	if (isHead)
+		color = player->headColor;
+	else
+		color = player->bodyColor;
+
+	shape.setFillColor(color);
 	shape.setOrigin(shape.getRadius() / 2.f, shape.getRadius() / 2.f);
 	shape.setPosition(pos);
 	bodyCircles.push_back(shape);

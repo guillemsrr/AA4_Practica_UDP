@@ -6,10 +6,14 @@ Player::Player()
 {
 }
 
-Player::Player(sf::Packet* pack)
+Player::Player(sf::Packet* pack) :
+	PlayerInfo(-1, "", 0, 0, SkinColors::DEFAULT)
 {
 	*pack >> appId;
 	*pack >> alias;
+	int aux;
+	*pack >> aux;
+	SetPlayerColor(static_cast<SkinColors>(aux));
 	AddBodyPositions(pack);
 	speed = 125.0f;
 }
@@ -34,6 +38,8 @@ void Player::AddBodyPositions(sf::Packet* pack)
 		pos.y = (float)y / 1000.f;
 		bodyPositions.push_back(pos);
 	}
+
+	bodyPositions[0];
 }
 
 void Player::UpdatePosition(sf::Packet* pack)

@@ -20,6 +20,6 @@ private:
 	float radius;
 	const float radiusCirclesRelation = 1.f;
 	void UpdateRadius();
-	void CreateBodyCircle(sf::Vector2f pos);
+	void CreateBodyCircle(sf::Vector2f pos, bool isHead);
 };
 

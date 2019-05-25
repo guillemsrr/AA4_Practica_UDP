@@ -75,7 +75,7 @@ void Board::DrawBoard(std::mutex& mtx)
 		Slither* slither = it->second;
 		if (!slither->IsPlayerDead())
 		{
-			for (int i = 0; i < (int)slither->bodyCircles.size(); ++i)
+			for (int i = (int)slither->bodyCircles.size() - 1; i >= 0 ; i--)
 			{
 				window.draw(slither->bodyCircles[i]);
 			}

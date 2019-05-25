@@ -5,23 +5,40 @@
 #include <vector>
 #include <iostream>
 #include "Constants.h"
+#include "UIButton.h"
+
+enum class SkinColors
+{
+	DEFAULT,
+	RED,
+	ORANGE,
+	YELLOW,
+	GREEN,
+	TURQUOISE,
+	LIGHTBLUE,
+	INDIGO,
+	VIOLET
+};
 
 class PlayerInfo
 {
 public:
 	PlayerInfo();
-	PlayerInfo(int id, std::string alias, float x, float y, sf::Color _color);
+	PlayerInfo(int id, std::string alias, float x, float y, SkinColors _skinColor);
 	~PlayerInfo();
 
 	int appId;
 	int queryId;
 	std::string alias;
 	std::vector<sf::Vector2f> bodyPositions;
-	sf::Color color;
+	sf::Color bodyColor;
+	sf::Color headColor;
 	sf::Vector2f direction;
+	SkinColors skinColor;
 
 	float Distance(sf::Vector2f v1, sf::Vector2f v2);
 	void Normalize(sf::Vector2f& vec);
+	void SetPlayerColor(SkinColors _skinColor);
 	void CreateBodyPosition();
 	const float separation = 10.0f;
 

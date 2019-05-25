@@ -6,19 +6,6 @@
 #include <UIButton.h>
 #include <UIText.h>
 
-enum class SkinButtonColors
-{
-	DEFAULT,
-	RED,
-	ORANGE,
-	YELLOW,
-	GREEN,
-	TURQUOISE,
-	LIGHTBLUE,
-	INDIGO,
-	VIOLET
-};
-
 const sf::Color MENUS_BG_RECT_COLOR = sf::Color(133, 221, 189);
 
 

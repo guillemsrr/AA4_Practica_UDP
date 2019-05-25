@@ -118,7 +118,6 @@ int main()
 				{
 					//create the player:
 					m_player = new Player(&pack);
-					m_player->color = sf::Color::Green;
 					playersMap[m_player->appId] = m_player;
 
 					std::cout << "WELCOME player "<< m_player->appId << std::endl;
@@ -137,14 +136,13 @@ int main()
 					for (int i = 0; i < sizeOthers; i++)
 					{
 						Player* p = new Player(&pack);
-						p->color = sf::Color::Red;
 						playersMap[p->appId] = p;
 					}
 
 					//create the balls:
 					int numFood;
 					pack >> numFood;
-					std::cout << "num balls: " << numFood << std::endl;
+					//std::cout << "num balls: " << numFood << std::endl;
 
 					std::vector<sf::Vector2f> foodPositions;
 
@@ -178,7 +176,6 @@ int main()
 				case NEW_PLAYER:
 				{
 					Player* p = new Player(&pack);
-					p->color = sf::Color::Red;
 					playersMap[p->appId] = p;
 					board.InitializeSlither(p);
 
@@ -340,6 +337,7 @@ int main()
 						m_player->dead = true;
 
 						std::cout << "YOU DIED" << std::endl;
+						sceneStage = SceneStage::DEATH;
 					}
 					else//other player killed
 					{
@@ -368,7 +366,7 @@ int main()
 						std::cout << "Sesion Iniciada: " << codigoLogin << std::endl;
 
 						//Ir al menu de skins/play
-
+						sceneStage = SceneStage::SKIN_SELECT;
 					}
 					else
 					{
@@ -571,59 +569,62 @@ void ButtonFunctionality()
 	if (lastPressedButtonID == btnBackToSkinSelectionID)
 	{
 		//From Death screen to Skin selection
+		sceneStage = SceneStage::SKIN_SELECT;
 	}
 	else if (lastPressedButtonID == btnRedID)
 	{
 		//Select Red skin...
-
+		m_player->SetPlayerColor(SkinColors::RED);
 		skinSelected = true;
 	}
 	else if (lastPressedButtonID == btnOrgID)
 	{
 		//Select Orange skin...
-
+		m_player->SetPlayerColor(SkinColors::ORANGE);
 		skinSelected = true;
 	}
 	else if (lastPressedButtonID == btnYlwID)
 	{
 		//Select Yellow skin...
-
+		m_player->SetPlayerColor(SkinColors::YELLOW);
 		skinSelected = true;
 	}
 	else if (lastPressedButtonID == btnGrnID)
 	{
 		//Select Green skin...
-
+		m_player->SetPlayerColor(SkinColors::GREEN);
 		skinSelected = true;
 	}
 	else if (lastPressedButtonID == btnTrqID)
 	{
 		//Select Turquoise skin...
-
+		m_player->SetPlayerColor(SkinColors::TURQUOISE);
 		skinSelected = true;
 	}
 	else if (lastPressedButtonID == btnCynID)
 	{
 		//Select Cyan skin...
-
+		m_player->SetPlayerColor(SkinColors::LIGHTBLUE);
 		skinSelected = true;
 	}
 	else if (lastPressedButtonID == btnIdgID)
 	{
 		//Select Indigo skin...
-
+		m_player->SetPlayerColor(SkinColors::INDIGO);
 		skinSelected = true;
 	}
 	else if (lastPressedButtonID == btnVltID)
 	{
 		//Select Violet skin...
-
+		m_player->SetPlayerColor(SkinColors::VIOLET);
 		skinSelected = true;
 	}
 
 	if (skinSelected)
 	{
 		//Start/join game
+
+		sceneStage = SceneStage::GAME;
 	}
 }
 
@@ -708,6 +709,7 @@ void GraphicsInterface()
 				sceneObjs.buttons[btnVltID].showText = false;
 				break;
 			case SceneStage::GAME:
+				//std::cout << "GAME stage started" << std::endl;
 				accumMove = sf::Vector2f(0, 0);
 
 				//crear el taulell amb les coordenades que ara ja tenim
@@ -796,7 +798,8 @@ void GraphicsInterface()
 		}
 		else if (sceneStage == SceneStage::GAME || sceneStage == SceneStage::DEATH)
 		{
-			bool deathScreen = sceneStage == SceneStage::DEATH;
+			//std::cout << "Stage draw" << std::endl;
+			bool deathScreen = (sceneStage == SceneStage::DEATH);
 			board.ClearWindow();
 			board.DrawBoard(mtx_food);
 			if (deathScreen)
@@ -806,7 +809,7 @@ void GraphicsInterface()
 			}
 			board.DisplayWindow();
 
-			if (!deathScreen)
+			if (deathScreen)
 			{
 				mouseCoords = sf::Mouse::getPosition(board.window);
 				// check all the window's events that were triggered since the last iteration of the loop
@@ -852,6 +855,7 @@ void GraphicsInterface()
 			}
 			else
 			{
+				//std::cout << "Stage is GAME" << std::endl;
 				board.Commands(m_player);
 
 				sf::Vector2i sumInt = sf::Vector2i((int)(board.playerMovement.x * 1000), (int)(board.playerMovement.y * 1000));
@@ -865,7 +869,7 @@ void GraphicsInterface()
 				if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
 				{
 					m_player->UpdatePosition(board.playerMovement);
-					board.UpdateSlither(m_player->id);
+					board.UpdateSlither(m_player->appId);
 				}
 			}			
 		}
@@ -874,11 +878,6 @@ void GraphicsInterface()
 
 void MoveSending()
 {
-	while (!startGame)
-	{
-		//just don't start
-	}
-
 	//sf::Clock clock;
 	sf::Packet pack;
 
@@ -887,6 +886,8 @@ void MoveSending()
 		//sf::Time t1 = clock.getElapsedTime();
 		//if (t1.asSeconds() > movementTimer)
 		//{
+		if (sceneStage == SceneStage::GAME)
+		{
 			if (abs(accumMove.x) + abs(accumMove.y) > 0)
 			{
 				pack.clear();
@@ -896,7 +897,7 @@ void MoveSending()
 
 				movesMap[actualMoveID] = m_player->bodyPositions[0];
 				actualMoveID++;
-				pack << (int)(accumMove.x*1000) << (int)(accumMove.y*1000);
+				pack << (int)(accumMove.x * 1000) << (int)(accumMove.y * 1000);
 
 				if (sock.send(pack, IP, PORT) != sf::UdpSocket::Status::Done)
 				{
@@ -905,9 +906,10 @@ void MoveSending()
 
 				accumMove = sf::Vector2f(0, 0);
 			}
+		}
 
 			//std::cout << "THREADS: MOVEMENT going to sleep for " << movementTimer * 1000 << " Milliseconds." << std::endl;
-			std::this_thread::sleep_for(std::chrono::milliseconds((int)(movementTimer * 1000)));
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(movementTimer * 1000)));
 			//std::cout << "THREADS: MOVEMENT awakened" << std::endl;
 			//clock.restart();
 		//}
@@ -925,11 +927,6 @@ void SendAcknowledge(int idPack)
 
 void InterpolatePositions()
 {
-	while (!startGame)
-	{
-		//just don't start
-	}
-
 	//sf::Clock clock;
 
 	while (true)
@@ -937,6 +934,8 @@ void InterpolatePositions()
 		//sf::Time t1 = clock.getElapsedTime();
 		//if (t1.asSeconds() > interpolationTimer)
 		//{
+		if (sceneStage == SceneStage::GAME)
+		{
 			std::vector<std::map<int, std::vector<sf::Vector2f>>::iterator> toErase;//vector per eliminar despr�s
 			for (std::map<int, std::vector<sf::Vector2f>>::iterator it = interpolationsMap.begin(); it != interpolationsMap.end(); ++it)
 			{
@@ -956,9 +955,10 @@ void InterpolatePositions()
 				interpolationsMap.erase(toErase[0]);
 				toErase.erase(toErase.begin());
 			}
+		}
 
 			//std::cout << "THREADS: INTERP going to sleep for " << interpolationTimer * 1000 << " Milliseconds." << std::endl;
-			std::this_thread::sleep_for(std::chrono::milliseconds((int)(interpolationTimer * 1000)));
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(interpolationTimer * 1000)));
 			//std::cout << "THREADS: INTERP awakened" << std::endl;
 			//clock.restart();
 		//}

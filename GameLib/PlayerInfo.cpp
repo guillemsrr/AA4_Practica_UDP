@@ -11,18 +11,18 @@ PlayerInfo::PlayerInfo()
 }
 
 
-PlayerInfo::PlayerInfo(int _id, std::string _alias, float _x, float _y, sf::Color _color)
+PlayerInfo::PlayerInfo(int _id, std::string _alias, float _x, float _y, SkinColors _skinColor)
 {
 	appId = _id;
 	alias = _alias;
 	currentFood = 0;
 
-	sf::Vector2f headPos;
+	/*sf::Vector2f headPos;
 	headPos.x = _x;
 	headPos.y = _y;
-	bodyPositions.push_back(headPos);
+	bodyPositions.push_back(headPos);*/
 
-	color = _color;
+	SetPlayerColor(_skinColor);
 	dead = false;
 }
 
@@ -41,6 +41,50 @@ void PlayerInfo::Normalize(sf::Vector2f& vec)
 	sf::Vector2f zero = sf::Vector2f(0.f, 0.f);
 	float dist = Distance(vec, zero);
 	vec /= dist;
+}
+
+void PlayerInfo::SetPlayerColor(SkinColors _skinColor)
+{
+	skinColor = _skinColor;
+	switch (skinColor)
+	{
+	case SkinColors::RED:
+		headColor = BTN_RED_CLK_COLOR;
+		bodyColor = BTN_RED_DEF_COLOR;
+		break;
+	case SkinColors::ORANGE:
+		headColor = BTN_ORG_CLK_COLOR;
+		bodyColor = BTN_ORG_DEF_COLOR;
+		break;
+	case SkinColors::YELLOW:
+		headColor = BTN_YLW_CLK_COLOR;
+		bodyColor = BTN_YLW_DEF_COLOR;
+		break;
+	case SkinColors::GREEN:
+		headColor = BTN_GRN_CLK_COLOR;
+		bodyColor = BTN_GRN_DEF_COLOR;
+		break;
+	case SkinColors::TURQUOISE:
+		headColor = BTN_TRQ_CLK_COLOR;
+		bodyColor = BTN_TRQ_DEF_COLOR;
+		break;
+	case SkinColors::LIGHTBLUE:
+		headColor = BTN_CYN_CLK_COLOR;
+		bodyColor = BTN_CYN_DEF_COLOR;
+		break;
+	case SkinColors::INDIGO:
+		headColor = BTN_IDG_CLK_COLOR;
+		bodyColor = BTN_IDG_DEF_COLOR;
+		break;
+	case SkinColors::VIOLET:
+		headColor = BTN_VLT_CLK_COLOR;
+		bodyColor = BTN_VLT_DEF_COLOR;
+		break;
+	case SkinColors::DEFAULT:
+		headColor = BTN_CLK_COLOR;
+		bodyColor = BTN_DEF_COLOR;
+		break;
+	}
 }
 
 void PlayerInfo::CreateBodyPosition()

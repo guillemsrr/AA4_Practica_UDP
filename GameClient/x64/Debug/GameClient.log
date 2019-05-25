@@ -1,5 +1,2 @@
-﻿  ClientSource.cpp
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(128): warning C4101: 'id': variable local sin referencia
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(459): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(477): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-  GameClient.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameClient.exe
+﻿  Slither.cpp
+  GameClient.vcxproj -> D:\users\Bleinz\Documents\Slitherio\AA4_Practica_UDP\x64\Debug\GameClient.exe

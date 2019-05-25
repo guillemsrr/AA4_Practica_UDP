@@ -39,9 +39,14 @@ void Board::UpdateSlither(int id)
 }
 
 
-void Board::DrawBoard(std::mutex& mtx)
+void Board::ClearWindow()
 {
 	window.clear();
+}
+
+void Board::DrawBoard(std::mutex& mtx)
+{
+	//window.clear();
 
 	//std::cout << "Draw food: " << (int)foodPositions.size() << ", " << (int)foodShapeBuffer.size() << "; ";
 	//paint foodballs:
@@ -77,6 +82,11 @@ void Board::DrawBoard(std::mutex& mtx)
 		}
 	}
 
+	//window.display();
+}
+
+void Board::DisplayWindow()
+{
 	window.display();
 }
 

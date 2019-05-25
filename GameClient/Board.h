@@ -22,7 +22,10 @@ public:
 	void InitializeSlither(Player* player);
 	void UpdateSlither(int id);
 	void UpdateSlithers();
+
+	void ClearWindow();
 	void DrawBoard(std::mutex& mtx);
+	void DisplayWindow();
 
 	void Commands(Player* player);
 	sf::RenderWindow window;

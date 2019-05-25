@@ -9,6 +9,7 @@
 #include <mutex>
 #include "FoodBall.h"
 #include <chrono>
+#include "SceneObjects.h"
 
 //---------CLIENTE---------//
 
@@ -58,6 +59,30 @@ void LoginUser();
 void RegisterLoginThreadFunction();
 void CriticPacketsManagerThreadFunction();
 
+enum class SceneStage
+{
+	LOGIN,
+	SKIN_SELECT,
+	GAME,
+	DEATH
+};
+
+SceneStage sceneStage = SceneStage::LOGIN;
+sf::Vector2i mouseCoords;
+bool LMBPressed = false;
+bool LMBDown = false;
+
+const std::string btnRedID = "redBtn";
+const std::string btnOrgID = "orgBtn";
+const std::string btnYlwID = "ylwBtn";
+const std::string btnGrnID = "grnBtn";
+const std::string btnTrqID = "trqBtn";
+const std::string btnCynID = "cynBtn";
+const std::string btnIdgID = "idgBtn";
+const std::string btnVltID = "vltBtn";
+const std::string btnBackToSkinSelectionID = "backToSkinSelBtn";
+
+std::string lastPressedButtonID = "None";
 
 int main()
 {
@@ -396,7 +421,6 @@ void RegisterLoginThreadFunction()
 
 	do
 	{
-
 		std::cout << "Registrarse(Register) o Iniciar Sesión(Login): ";
 		std::cin >> accion;
 
@@ -516,45 +540,334 @@ void HelloSending()
 	}
 }
 
-void GraphicsInterface()
+void UpdateButtonAppearance(UIButton & btn, std::string bt)
 {
-	while (!startGame)
+	if (btn.GetInteractable())
 	{
-		//std::cout << "NOT STARTING YET" << std::endl;
-		//just don't start
+		if (btn.CheckCursorCollision(mouseCoords))
+		{
+			if (LMBDown)
+			{
+				btn.SetPressed();
+				lastPressedButtonID = bt;
+			}
+			else if (!LMBPressed)
+			{
+				btn.SetHover();
+			}
+		}
+		else
+		{
+			btn.SetDefault();
+		}
+	}
+}
+
+///Falta implementar
+void ButtonFunctionality()
+{
+	bool skinSelected = false;
+
+	if (lastPressedButtonID == btnBackToSkinSelectionID)
+	{
+		//From Death screen to Skin selection
+	}
+	else if (lastPressedButtonID == btnRedID)
+	{
+		//Select Red skin...
+
+		skinSelected = true;
+	}
+	else if (lastPressedButtonID == btnOrgID)
+	{
+		//Select Orange skin...
+
+		skinSelected = true;
+	}
+	else if (lastPressedButtonID == btnYlwID)
+	{
+		//Select Yellow skin...
+
+		skinSelected = true;
+	}
+	else if (lastPressedButtonID == btnGrnID)
+	{
+		//Select Green skin...
+
+		skinSelected = true;
+	}
+	else if (lastPressedButtonID == btnTrqID)
+	{
+		//Select Turquoise skin...
+
+		skinSelected = true;
+	}
+	else if (lastPressedButtonID == btnCynID)
+	{
+		//Select Cyan skin...
+
+		skinSelected = true;
+	}
+	else if (lastPressedButtonID == btnIdgID)
+	{
+		//Select Indigo skin...
+
+		skinSelected = true;
+	}
+	else if (lastPressedButtonID == btnVltID)
+	{
+		//Select Violet skin...
+
+		skinSelected = true;
 	}
 
-	accumMove = sf::Vector2f(0,0);
-
-	//crear el taulell amb les coordenades que ara ja tenim
-	for (std::map<int, Player*>::iterator it = playersMap.begin(); it != playersMap.end(); ++it)
+	if (skinSelected)
 	{
-		//std::lock_guard<std::mutex> guard(mtx);
+		//Start/join game
+	}
+}
 
-		Player* player = it->second;
-		board.InitializeSlither(player);
+void GraphicsInterface()
+{
+	SceneStage lastSceneStage = sceneStage;
+	bool startFlag = true;
+	//while (!startGame)
+	//{
+	//	//std::cout << "NOT STARTING YET" << std::endl;
+	//	//just don't start
+	//}
+
+	SceneObjects sceneObjs;
+
+	sf::Font font;
+
+	if (!font.loadFromFile("courbd.ttf"))
+	{
+		std::cout << "Can't load the font file" << std::endl;
 	}
 
 	board.window.create(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Slither Remake");
 	while (board.window.isOpen())
 	{
-		//std::lock_guard<std::mutex> guard(mtx);
-
-		board.DrawBoard(mtx_food);
-		board.Commands(m_player);
-
-		sf::Vector2i sumInt = sf::Vector2i((int)(board.playerMovement.x*1000), (int)(board.playerMovement.y*1000));
-		board.playerMovement = sf::Vector2f((float)sumInt.x/1000.f, (float)sumInt.y / 1000.f);
-		accumMove += board.playerMovement;
-
-		sumInt = sf::Vector2i((int)(accumMove.x * 1000), (int)(accumMove.y * 1000));
-		accumMove = sf::Vector2f((float)sumInt.x / 1000.f, (float)sumInt.y / 1000.f);
-
-		////prediction movement:
-		if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
+		if (lastSceneStage != sceneStage || startFlag)
 		{
-			m_player->UpdatePosition(board.playerMovement);
-			board.UpdateSlither(m_player->appId);
+			lastPressedButtonID = "None";
+			sceneObjs.buttonIDs.clear();
+			sceneObjs.buttons.clear();
+			sceneObjs.standaloneRects.clear();
+			sceneObjs.texts.clear();
+					   
+			switch (sceneStage)
+			{
+			case SceneStage::LOGIN:
+				sceneObjs.AddStandaloneRect(sf::Vector2f(SCREEN_WIDTH * .8f, SCREEN_HEIGHT * .8f), sf::Vector2f(SCREEN_WIDTH * .1f, SCREEN_HEIGHT * .1f), MENUS_BG_RECT_COLOR, 10, BTN_DEF_COLOR);
+				sceneObjs.AddText("Log in through the console", sf::Color::White, font, 3, 15, sf::Vector2i(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), sf::Vector2f(.5f, .5f));
+				break;
+			case SceneStage::SKIN_SELECT:
+				sceneObjs.AddStandaloneRect(sf::Vector2f(SCREEN_WIDTH * .8f, SCREEN_HEIGHT * .8f), sf::Vector2f(SCREEN_WIDTH * .1f, SCREEN_HEIGHT * .1f), MENUS_BG_RECT_COLOR, 10, BTN_DEF_COLOR);
+				sceneObjs.AddText("Pick a skin", sf::Color::White, font, 3, 15, sf::Vector2i(SCREEN_WIDTH / 2, SCREEN_HEIGHT * .2f), sf::Vector2f(.5f, .5f));
+
+				sceneObjs.AddButton(btnRedID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f * .8f), sf::Vector2i(SCREEN_WIDTH * .2f, SCREEN_HEIGHT * .4f), sf::Vector2f(.5f, .5f), font);
+				sceneObjs.buttons[btnRedID].OverrideBtnInnerColors(BTN_RED_DEF_COLOR, BTN_RED_HOV_COLOR, BTN_RED_CLK_COLOR, BTN_RED_DIS_COLOR);
+				sceneObjs.buttons[btnRedID].OverrideBtnOutlineColors(CBTN_OUTLINE_COLOR);
+				sceneObjs.buttons[btnRedID].showText = false;
+
+				sceneObjs.AddButton(btnOrgID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f * .8f), sf::Vector2i(SCREEN_WIDTH * .2f, SCREEN_HEIGHT * .6f), sf::Vector2f(.5f, .5f), font);
+				sceneObjs.buttons[btnOrgID].OverrideBtnInnerColors(BTN_ORG_DEF_COLOR, BTN_ORG_HOV_COLOR, BTN_ORG_CLK_COLOR, BTN_ORG_DIS_COLOR);
+				sceneObjs.buttons[btnOrgID].OverrideBtnOutlineColors(CBTN_OUTLINE_COLOR);
+				sceneObjs.buttons[btnOrgID].showText = false;
+
+				sceneObjs.AddButton(btnYlwID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f * .8f), sf::Vector2i(SCREEN_WIDTH * .4f, SCREEN_HEIGHT * .4f), sf::Vector2f(.5f, .5f), font);
+				sceneObjs.buttons[btnYlwID].OverrideBtnInnerColors(BTN_YLW_DEF_COLOR, BTN_YLW_HOV_COLOR, BTN_YLW_CLK_COLOR, BTN_YLW_DIS_COLOR);
+				sceneObjs.buttons[btnYlwID].OverrideBtnOutlineColors(CBTN_OUTLINE_COLOR);
+				sceneObjs.buttons[btnYlwID].showText = false;
+
+				sceneObjs.AddButton(btnGrnID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f * .8f), sf::Vector2i(SCREEN_WIDTH * .4f, SCREEN_HEIGHT * .6f), sf::Vector2f(.5f, .5f), font);
+				sceneObjs.buttons[btnGrnID].OverrideBtnInnerColors(BTN_GRN_DEF_COLOR, BTN_GRN_HOV_COLOR, BTN_GRN_CLK_COLOR, BTN_GRN_DIS_COLOR);
+				sceneObjs.buttons[btnGrnID].OverrideBtnOutlineColors(CBTN_OUTLINE_COLOR);
+				sceneObjs.buttons[btnGrnID].showText = false;
+
+				sceneObjs.AddButton(btnTrqID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f * .8f), sf::Vector2i(SCREEN_WIDTH * .6f, SCREEN_HEIGHT * .4f), sf::Vector2f(.5f, .5f), font);
+				sceneObjs.buttons[btnTrqID].OverrideBtnInnerColors(BTN_TRQ_DEF_COLOR, BTN_TRQ_HOV_COLOR, BTN_TRQ_CLK_COLOR, BTN_TRQ_DIS_COLOR);
+				sceneObjs.buttons[btnTrqID].OverrideBtnOutlineColors(CBTN_OUTLINE_COLOR);
+				sceneObjs.buttons[btnTrqID].showText = false;
+
+				sceneObjs.AddButton(btnCynID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f * .8f), sf::Vector2i(SCREEN_WIDTH * .6f, SCREEN_HEIGHT * .6f), sf::Vector2f(.5f, .5f), font);
+				sceneObjs.buttons[btnCynID].OverrideBtnInnerColors(BTN_CYN_DEF_COLOR, BTN_CYN_HOV_COLOR, BTN_CYN_CLK_COLOR, BTN_CYN_DIS_COLOR);
+				sceneObjs.buttons[btnCynID].OverrideBtnOutlineColors(CBTN_OUTLINE_COLOR);
+				sceneObjs.buttons[btnCynID].showText = false;
+
+				sceneObjs.AddButton(btnIdgID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f * .8f), sf::Vector2i(SCREEN_WIDTH * .8f, SCREEN_HEIGHT * .4f), sf::Vector2f(.5f, .5f), font);
+				sceneObjs.buttons[btnIdgID].OverrideBtnInnerColors(BTN_IDG_DEF_COLOR, BTN_IDG_HOV_COLOR, BTN_IDG_CLK_COLOR, BTN_IDG_DIS_COLOR);
+				sceneObjs.buttons[btnIdgID].OverrideBtnOutlineColors(CBTN_OUTLINE_COLOR);
+				sceneObjs.buttons[btnIdgID].showText = false;
+
+				sceneObjs.AddButton(btnVltID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f * .8f), sf::Vector2i(SCREEN_WIDTH * .8f, SCREEN_HEIGHT * .6f), sf::Vector2f(.5f, .5f), font);
+				sceneObjs.buttons[btnVltID].OverrideBtnInnerColors(BTN_VLT_DEF_COLOR, BTN_VLT_HOV_COLOR, BTN_VLT_CLK_COLOR, BTN_VLT_DIS_COLOR);
+				sceneObjs.buttons[btnVltID].OverrideBtnOutlineColors(CBTN_OUTLINE_COLOR);
+				sceneObjs.buttons[btnVltID].showText = false;
+				break;
+			case SceneStage::GAME:
+				accumMove = sf::Vector2f(0, 0);
+
+				//crear el taulell amb les coordenades que ara ja tenim
+				for (std::map<int, Player*>::iterator it = playersMap.begin(); it != playersMap.end(); ++it)
+				{
+					//std::lock_guard<std::mutex> guard(mtx);
+					Player* player = it->second;
+					board.InitializeSlither(player);
+				}
+				break;
+			case SceneStage::DEATH:
+				sceneObjs.AddText("You Died, eat faster next time.", sf::Color::White, font, 3, 15, sf::Vector2i(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), sf::Vector2f(.5f, .5f), sf::Color::Red);
+				sceneObjs.AddButton(btnBackToSkinSelectionID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f), sf::Vector2i(SCREEN_WIDTH * .5f, SCREEN_HEIGHT * .7f), sf::Vector2f(.5f, .5f), font, "Exit");
+				break;
+			}
+
+			lastSceneStage = sceneStage;
+			startFlag = false;
+		}
+		
+		if (sceneStage == SceneStage::LOGIN)
+		{
+			board.ClearWindow();
+			//Draw sceneObjs
+			sceneObjs.DrawScene(board.window);
+			board.DisplayWindow();
+		}
+		else if (sceneStage == SceneStage::SKIN_SELECT)
+		{
+			board.ClearWindow();
+			//Draw sceneObjs
+			sceneObjs.DrawScene(board.window);
+			board.DisplayWindow();
+
+			mouseCoords = sf::Mouse::getPosition(board.window);
+			// check all the window's events that were triggered since the last iteration of the loop
+			sf::Event event;
+			LMBDown = false;
+			while (board.window.pollEvent(event))
+			{
+
+				// "close requested" event: we close the window
+				if (event.type == sf::Event::Closed)
+				{
+					board.window.close();
+					exit(0);
+				}
+				else if (event.type == sf::Event::MouseButtonPressed)
+				{
+					if (event.mouseButton.button == sf::Mouse::Left)
+					{
+						LMBPressed = true;
+						LMBDown = true;
+					}
+					else if (event.mouseButton.button == sf::Mouse::Right)
+					{
+
+					}
+				}
+				else if (event.type == sf::Event::MouseButtonReleased)
+				{
+					if (event.mouseButton.button == sf::Mouse::Left)
+					{
+						LMBPressed = false;
+						if (lastPressedButtonID != "None")
+						{
+							if (sceneObjs.buttons[lastPressedButtonID].CheckCursorCollision(mouseCoords) && sceneObjs.buttons[lastPressedButtonID].GetInteractable())
+							{
+								//Button functionality
+								ButtonFunctionality();
+							}
+						}						
+					}
+				}
+
+				//Set button colors (Default - Hover - Click)
+				UpdateButtonAppearance(sceneObjs.buttons[btnRedID], btnRedID);
+				UpdateButtonAppearance(sceneObjs.buttons[btnOrgID], btnOrgID);
+				UpdateButtonAppearance(sceneObjs.buttons[btnYlwID], btnYlwID);
+				UpdateButtonAppearance(sceneObjs.buttons[btnGrnID], btnGrnID);
+				UpdateButtonAppearance(sceneObjs.buttons[btnTrqID], btnTrqID);
+				UpdateButtonAppearance(sceneObjs.buttons[btnCynID], btnCynID);
+				UpdateButtonAppearance(sceneObjs.buttons[btnIdgID], btnIdgID);
+				UpdateButtonAppearance(sceneObjs.buttons[btnVltID], btnVltID);
+			}
+		}
+		else if (sceneStage == SceneStage::GAME || sceneStage == SceneStage::DEATH)
+		{
+			bool deathScreen = sceneStage == SceneStage::DEATH;
+			board.ClearWindow();
+			board.DrawBoard(mtx_food);
+			if (deathScreen)
+			{
+				//Draw sceneObjs
+				sceneObjs.DrawScene(board.window);
+			}
+			board.DisplayWindow();
+
+			if (!deathScreen)
+			{
+				mouseCoords = sf::Mouse::getPosition(board.window);
+				// check all the window's events that were triggered since the last iteration of the loop
+				sf::Event event;
+				LMBDown = false;
+				while (board.window.pollEvent(event))
+				{
+
+					// "close requested" event: we close the window
+					if (event.type == sf::Event::Closed)
+					{
+						board.window.close();
+						exit(0);
+					}
+					else if (event.type == sf::Event::MouseButtonPressed)
+					{
+						if (event.mouseButton.button == sf::Mouse::Left)
+						{
+							LMBPressed = true;
+							LMBDown = true;
+						}
+						else if (event.mouseButton.button == sf::Mouse::Right)
+						{
+
+						}
+					}
+					else if (event.type == sf::Event::MouseButtonReleased)
+					{
+						if (event.mouseButton.button == sf::Mouse::Left)
+						{
+							LMBPressed = false;
+							if (sceneObjs.buttons[lastPressedButtonID].CheckCursorCollision(mouseCoords) && sceneObjs.buttons[lastPressedButtonID].GetInteractable())
+							{
+								//Button functionality
+								ButtonFunctionality();
+							}
+						}
+					}
+
+					//Set button colors (Default - Hover - Click)
+					UpdateButtonAppearance(sceneObjs.buttons[btnBackToSkinSelectionID], btnBackToSkinSelectionID);
+				}
+			}
+			else
+			{
+				board.Commands(m_player);
+
+				sf::Vector2i sumInt = sf::Vector2i((int)(board.playerMovement.x * 1000), (int)(board.playerMovement.y * 1000));
+				board.playerMovement = sf::Vector2f((float)sumInt.x / 1000.f, (float)sumInt.y / 1000.f);
+				accumMove += board.playerMovement;
+
+				sumInt = sf::Vector2i((int)(accumMove.x * 1000), (int)(accumMove.y * 1000));
+				accumMove = sf::Vector2f((float)sumInt.x / 1000.f, (float)sumInt.y / 1000.f);
+
+				////prediction movement:
+				if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
+				{
+					m_player->UpdatePosition(board.playerMovement);
+					board.UpdateSlither(m_player->id);
+				}
+			}			
 		}
 	}
 }

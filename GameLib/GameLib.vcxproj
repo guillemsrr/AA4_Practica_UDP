@@ -146,10 +146,16 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Food.h" />
     <ClInclude Include="PlayerInfo.h" />
+    <ClInclude Include="UIButton.h" />
+    <ClInclude Include="UIText.h" />
+    <ClInclude Include="UIToggle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Food.cpp" />
     <ClCompile Include="PlayerInfo.cpp" />
+    <ClCompile Include="UIButton.cpp" />
+    <ClCompile Include="UIText.cpp" />
+    <ClCompile Include="UIToggle.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

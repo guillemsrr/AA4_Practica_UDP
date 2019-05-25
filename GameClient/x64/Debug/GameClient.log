@@ -1,6 +1,14 @@
 ﻿  Board.cpp
+<<<<<<< HEAD
   FoodBall.cpp
   ClientSource.cpp
 c:\users\guillemserralorenz\documents\aa4_practica_udp\gameclient\clientsource.cpp(99): warning C4101: 'id': unreferenced local variable
   Generating Code...
   GameClient.vcxproj -> C:\Users\guillemserralorenz\Documents\AA4_Practica_UDP\x64\Debug\GameClient.exe
+=======
+  ClientSource.cpp
+  Player.cpp
+  Slither.cpp
+  Generando código...
+  GameClient.vcxproj -> C:\Users\adria\Desktop\AA4_Practica_UDP\x64\Debug\GameClient.exe
+>>>>>>> MySQLConnection

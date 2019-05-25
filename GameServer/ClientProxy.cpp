@@ -9,7 +9,9 @@ ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigne
 	port = _port;
 	numPings = 0;
 	CreateInitialBodyPositions(headPos);
-	accumMovement = sf::Vector2f(0.f,0.f);
+	accumMovement = sf::Vector2f(0,0);
+	isLogging = false;
+	isLogged = false;
 }
 
 ClientProxy::~ClientProxy()

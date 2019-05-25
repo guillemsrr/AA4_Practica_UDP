@@ -12,11 +12,23 @@
 
 //---------CLIENTE---------//
 
+//client data:
+std::string username;
+std::string password;
+std::string email;
+
 
 sf::UdpSocket sock;
 bool received = false;
 std::mutex mtx_food;
 std::mutex mtx_bodies;
+bool startGame = false;
+bool registerResponse = false;
+bool loginResponse = false;
+bool loginOrRegister = true;
+int codigoRegistro = 0;
+int codigoLogin = 0;
+std::mutex mtx;
 int actualMoveID = 0;
 
 //maps:
@@ -30,6 +42,7 @@ Board board;
 
 //timers:
 const float helloSendingTimer = 2.f;
+const float registerSendingTimer = 1.f;
 const float movementTimer = 0.1f;
 const float criticResendTimer = 2.f;
 const float interpolationTimer = 0.001f;
@@ -40,6 +53,9 @@ void GraphicsInterface();
 void MoveSending();
 void SendAcknowledge(int idPack);
 void InterpolatePositions();
+void RegisterUser();
+void LoginUser();
+void RegisterLoginThreadFunction();
 
 
 
@@ -70,12 +86,23 @@ int main()
 				{
 				case WELCOME:
 				{
+					//Server confirmed us
+					received = true;
+
 					//create the player:
 					m_player = new Player(&pack);
 					m_player->color = sf::Color::Green;
 					playersMap[m_player->id] = m_player;
 
 					std::cout << "WELCOME player "<< m_player->id << std::endl;
+
+					//Dar paso al registro y/o login
+
+					std::thread RegisterLoginThread(RegisterLoginThreadFunction);
+					RegisterLoginThread.detach();
+
+
+					//ESTO DEBERIA IR DESPUES DEL LOGIN SI O SI
 
 					//create the others:
 					int sizeOthers;
@@ -86,6 +113,7 @@ int main()
 						p->color = sf::Color::Red;
 						playersMap[p->id] = p;
 					}
+					received = true;
 
 					//create the balls:
 					int numFood;
@@ -299,12 +327,146 @@ int main()
 				}
 					break;
 				break;
+				case REGISTER:
+					pack >> codigoRegistro;
+
+					std::cout << "Recibo confirmacion del registro con codigo: " << codigoRegistro << std::endl;
+
+					registerResponse = true;
+					break;
+				case LOGIN:
+
+					pack >> codigoLogin;
+					std::cout << "Recibo confirmacion del login con codigo:" << codigoLogin << std::endl;
+					loginResponse = true;
+					break;
 				}
 			}
 		}
 	}
 
 	return 0;
+}
+
+void RegisterLoginThreadFunction()
+{
+	std::string accion;
+
+	do
+	{
+
+		std::cout << "Registrarse(Register) o Iniciar Sesi�n(Login): ";
+		std::cin >> accion;
+
+		if (accion == "Register")
+		{
+			//Recoger datos de formulario
+			std::cout << "Introduce el nombre de usuario deseado: ";
+			std::cin >> username;
+			std::cout << std::endl;
+
+			std::cout << "Introduce tu contrase�a deseada: ";
+			std::cin >> password;
+			std::cout << std::endl;
+
+			std::cout << "Introduce tu email: ";
+			std::cin >> email;
+			std::cout << std::endl;
+
+			//loginOrRegister = false;
+
+			RegisterUser();
+		}
+		else if (accion == "Login")
+		{
+			//Recoger datos de formulario
+			std::cout << "Introduce el nombre de usuario deseado: ";
+			std::cin >> username;
+			std::cout << std::endl;
+
+			std::cout << "Introduce tu contrase�a deseada: ";
+			std::cin >> password;
+			std::cout << std::endl;
+
+			//loginOrRegister = false;
+
+			LoginUser();
+		}
+		else
+		{
+			//loginOrRegister = true;
+		}
+
+
+
+	} while (loginOrRegister);
+
+
+	//Menu principal
+	startGame = true;
+}
+
+void RegisterUser()
+{
+
+	sf::Clock clock;
+	
+
+	//Utilizar cabecera REGISTER, con username, password, email.
+	sf::Packet packRegister;
+	packRegister << static_cast<int>(Protocol::REGISTER);
+	packRegister << username << password << email;
+
+	while (!registerResponse)
+	{
+		sf::Time t1 = clock.getElapsedTime();
+		if (t1.asSeconds() > helloSendingTimer)
+		{
+			//Enviar paquete a servidor cada x segundos, hasta que  me diga ok
+			if (sock.send(packRegister, IP, PORT) != sf::UdpSocket::Status::Done)
+				std::cout << "Error al enviar el registro" << std::endl;
+			else
+				std::cout << "Registro enviado" << std::endl;
+
+
+			clock.restart();
+		}
+		
+	}
+
+	loginOrRegister = false;
+	
+}
+
+void LoginUser()
+{
+
+	sf::Clock clock;
+
+	//Utilizar cabecera LOGIN con username y password.
+	sf::Packet packetLogin;
+	packetLogin << static_cast<int>(Protocol::LOGIN);
+	packetLogin << username << password;
+
+	while (!loginResponse)
+	{
+
+		sf::Time t1 = clock.getElapsedTime();
+		if (t1.asSeconds() > helloSendingTimer)
+		{
+			//Enviar paquete a servidor cada x segundos, hasta que me diga ok
+			if (sock.send(packetLogin, IP, PORT) != sf::UdpSocket::Status::Done)
+				std::cout << "Error al enviar el login" << std::endl;
+			else
+				std::cout << "Login enviado" << std::endl;
+
+
+			clock.restart();
+		}
+		
+	}
+
+	loginOrRegister = false;
 }
 
 void HelloSending()
@@ -339,7 +501,7 @@ void HelloSending()
 
 void GraphicsInterface()
 {
-	while (!received)
+	while (!startGame)
 	{
 		std::cout << "NOT STARTING YET" << std::endl;
 		//just don't start
@@ -382,7 +544,7 @@ void GraphicsInterface()
 
 void MoveSending()
 {
-	while (!received)
+	while (!startGame)
 	{
 		//just don't start
 	}
@@ -433,7 +595,7 @@ void SendAcknowledge(int idPack)
 
 void InterpolatePositions()
 {
-	while (!received)
+	while (!startGame)
 	{
 		//just don't start
 	}

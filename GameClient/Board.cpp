@@ -21,7 +21,7 @@ Board::~Board()
 void Board::InitializeSlither(Player* player)
 {
 	Slither* s = new Slither(player);
-	slithersMap[player->id] = s;
+	slithersMap[player->appId] = s;
 }
 
 void Board::UpdateSlithers()

@@ -1,15 +1,16 @@
 ﻿  ServerSource.cpp
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(58): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(523): warning C4101: 'res': variable local sin referencia
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(602): warning C4267: '=': conversión de 'size_t' a 'int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(770): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(771): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(936): warning C4244: '=': conversión de 'int' a 'T'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(71): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(582): warning C4101: 'res': variable local sin referencia
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(661): warning C4267: '=': conversión de 'size_t' a 'int'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(752): warning C4244: 'inicializando': conversión de 'double' a 'float'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(833): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(834): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(999): warning C4244: '=': conversión de 'int' a 'T'; posible pérdida de datos
           with
           [
               T=float
           ]
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(937): warning C4244: '=': conversión de 'int' a 'T'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(1000): warning C4244: '=': conversión de 'int' a 'T'; posible pérdida de datos
           with
           [
               T=float

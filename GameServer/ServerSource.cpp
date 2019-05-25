@@ -8,6 +8,7 @@
 #include <thread>
 #include <math.h>
 #include <Food.h>
+#include <queue>
 #include <jdbc/mysql_connection.h>
 #include <jdbc/mysql_driver.h>
 #include <jdbc/cppconn/statement.h>
@@ -17,6 +18,13 @@
 
 //---------SERVIDOR---------//
 
+typedef struct {
+	sf::IpAddress ip;
+	unsigned short port;
+	sf::Packet pack;
+}LoginRegisterPack;
+
+
 
 sf::UdpSocket sock;
 const int maxFood = 100;
@@ -25,6 +33,9 @@ const float minFoodDist = 200.f;
 //lists / maps
 std::map<int, ClientProxy*> clientProxies;
 std::map<int, CriticPack*> criticPackets;
+std::queue<LoginRegisterPack> loginQueue;
+std::queue<LoginRegisterPack> registerQueue;
+
 std::vector<Food*> foodVector;
 
 
@@ -41,7 +52,7 @@ void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void SetPlayerSesion(int idPlayer);
 void GetPlayeBBDDInfo(int idPlayer);
 void UpdatePlayerBBDDInfo(int idPlayer);
-void ComputeMMRFromPlayer(int idPlayer);
+void ComputeMMRFromPlayer(int idPlayer, int partidasGanadas, int partidasJugadas, int totalKills, int partidasNoGanadas);
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AccumMovement(sf::Packet pack);
 void MovementControl(int idPlayer, int idMove);
@@ -49,6 +60,8 @@ void InitializeFood();
 bool RandomPacketLost();
 float Distance(sf::Vector2f v1, sf::Vector2f v2);
 void PlayerCollisionCheck(int idPlayer);
+void loginThreadFunction();
+void registerThreadFunction();
 
 
 int main()
@@ -80,6 +93,14 @@ int main()
 	std::thread movementControlThread(&MovementControlThread);
 	movementControlThread.detach();
 
+	//Crear thread para administrar login 
+	std::thread loginThread(&loginThreadFunction);
+	loginThread.detach();
+	
+	//Crear thread para administrar register 
+	std::thread registerThread(&registerThreadFunction);
+	registerThread.detach();
+
 	//initialize food:
 	InitializeFood();
 
@@ -104,6 +125,9 @@ int main()
 		{
 			//std::cout << "Reading package" << std::endl;
 			int num;
+			int auxID;
+			sf::Packet packS;
+			LoginRegisterPack lrp;
 			pack >> num;
 			switch (static_cast<Protocol>(num))
 			{
@@ -129,11 +153,41 @@ int main()
 				break;
 			case REGISTER:
 				std::cout << "Petición de registro recibida." << std::endl;
-				AnswerRegister(ip, port, pack);
+				pack >> auxID;
+				//Mandar ACK de vuelta
+				
+				packS.clear();
+				packS << static_cast<int>(Protocol::ACK);
+				packS << auxID;
+				sock.send(packS, ip, port);
+
+				//Añadir pack a la queue
+				lrp.ip = ip;
+				lrp.port = port;
+				lrp.pack = pack;
+
+				registerQueue.push(lrp);
+
+				//AnswerRegister(ip, port, pack);
 				break;
 			case LOGIN:
 				std::cout << "Petición de login recibida." << std::endl;
-				AnswerLogin(ip, port, pack);
+				pack >> auxID;
+				//Mandar ACK de vuelta
+
+				packS.clear();
+				packS << static_cast<int>(Protocol::ACK);
+				packS << auxID;
+				sock.send(packS, ip, port);
+
+				//Añadir pack a la queue
+				lrp.ip = ip;
+				lrp.port = port;
+				lrp.pack = pack;
+
+				loginQueue.push(lrp);
+				
+				//AnswerLogin(ip, port, pack);
 				break;
 			}
 		}
@@ -161,13 +215,16 @@ void PingThreadFunction()
 		//{
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
-				if (sock.send(packPing, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
+				if (it->second->uState == UserState::PLAY)
 				{
-					std::cout << "Error sending PING to client with id: " << it->second->id << "and ip: " << it->second->ip.toString() << std::endl;
-				}
-				else
-				{
-					it->second->numPings++;
+					if (sock.send(packPing, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
+					{
+						std::cout << "Error sending PING to client with id: " << it->second->appId << "and ip: " << it->second->ip.toString() << std::endl;
+					}
+					else
+					{
+						it->second->numPings++;
+					}
 				}
 			}
 
@@ -230,7 +287,7 @@ void DisconnectionCheckerThreadFunction()
 					pack << static_cast<int>(Protocol::DISCONNECTED);
 					int idPack = (int)criticPackets.size();
 					pack << idPack;
-					pack << it->second->id;
+					pack << it->second->appId;
 
 					//Enviar DISCONNECTED
 					for (std::map<int, ClientProxy*>::iterator it2 = clientProxies.begin(); it2 != clientProxies.end(); ++it2)
@@ -295,7 +352,7 @@ void MovementControlThread()
 			{
 				if (abs(it->second->accumMovement.x) + abs(it->second->accumMovement.y) > 0)
 				{
-					MovementControl(it->second->id, it->second->lastIdMove);
+					MovementControl(it->second->appId, it->second->lastIdMove);
 				}
 			}
 
@@ -378,11 +435,11 @@ void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 
 	///3-Hacer registro
 
-	int errorCode = 0;
+	int errorCode = 1;
 	/*
 	ESTE ERROR CODE TIENE LAS SIGUIENTES OPCIONES:
-		0 - Registro OK
-		1 - Usuario o email ya registrados
+		1 - Registro OK
+		0 - Usuario o email ya registrados
 	*/
 
 
@@ -478,6 +535,8 @@ void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 					//El cliente ha iniciado sesión
 					errorCode = 1;
 
+					it->second->queryId = idUser;
+					it->second->uState = UserState::LOBBY;
 					it->second->isLogged = true;
 					SetPlayerSesion(idUser);
 
@@ -665,8 +724,8 @@ void GetPlayeBBDDInfo(int idPlayer)
 
 	//3-LLamar a función de MMR
 
-	//ComputeMMRFromPlayer(idPlayer);
-	std::cout << "MMR value for this user === " << ((partidasGanadas / partidasJugadas) * 80) + ((totalKills / partidasNoGanadas) * 20) << std::endl;
+	ComputeMMRFromPlayer(idPlayer, partidasGanadas, partidasJugadas, totalKills, partidasNoGanadas);
+	//std::cout << "MMR value for this user === " << ((partidasGanadas / fmax(partidasJugadas, 1)) * 80) + ((totalKills / fmax(partidasNoGanadas, 1)) * 20) << std::endl;
 
 }
 
@@ -681,7 +740,7 @@ void UpdatePlayerBBDDInfo(int idPlayer)
 
 }
 
-void ComputeMMRFromPlayer(int idPlayer)
+void ComputeMMRFromPlayer(int idPlayer, int partidasGanadas, int partidasJugadas, int totalKills, int partidasNoGanadas)
 {
 	/*Computar el MMR del usuario
 		MMR1=((NumVictorias/NumPartidasJugadas)*80)+(NumMuertesTotales*20);				+-5/+-10 para encontrar partida sería lo óptimo pero dada la escasez de jugadores para testear simplemente ordenarlos
@@ -690,9 +749,13 @@ void ComputeMMRFromPlayer(int idPlayer)
 
 
 	//1-Calcular el MMR del usuario indicado
-
+	float mmr = ((partidasGanadas / fmax(partidasJugadas, 1)) * 80) + ((totalKills / fmax(partidasNoGanadas, 1)) * 20);
 	//2-Actualizar su valor de MMR en la clase ClientProxy
-
+	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+	{
+		it->second->mmr = mmr;
+		std::cout << "Player with id: " << it->second->appId << ", has the next MMR: " << it->second->mmr << std::endl;
+	}
 }
 
 void FoodUpdateThread()
@@ -755,7 +818,7 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		ClientProxy* client = it->second;
 		if (client->ip == ip && client->port == port)
 		{
-			std::cout << "Client already exists. The id is: "<<client->id << std::endl;
+			std::cout << "Client already exists. The id is: "<<client->appId << std::endl;
 			newClient = client;
 			clientExists = true;
 			break;
@@ -790,7 +853,7 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	pack << static_cast<int>(clientProxies.size());
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
-		if (it->second->id != newClient->id)
+		if (it->second->appId != newClient->appId)
 		{
 			it->second->AddDataToPacket(&pack);
 		}
@@ -837,7 +900,7 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 
 	//finalment afegim el nou client al map
 	if(!clientExists)
-		clientProxies[newClient->id] = newClient;
+		clientProxies[newClient->appId] = newClient;
 }
 
 void AccumMovement(sf::Packet pack)
@@ -1009,5 +1072,41 @@ void PlayerCollisionCheck(int idPlayer)
 		
 		//clientProxies.erase(idPlayer);
 		clientProxies[idPlayer]->dead = true;
+	}
+}
+
+void loginThreadFunction()
+{
+	while (true)
+	{
+		if (loginQueue.size() > 0)
+		{
+			LoginRegisterPack lrp = loginQueue.front();
+
+			//Login
+			AnswerLogin(lrp.ip, lrp.port, lrp.pack);
+
+			loginQueue.pop();
+		}
+		else
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * CRITICPACKETSTIMER)));
+	}
+}
+
+void registerThreadFunction()
+{
+	while (true)
+	{
+		if (registerQueue.size() > 0)
+		{
+			LoginRegisterPack lrp = registerQueue.front();
+
+			//Register
+			AnswerRegister(lrp.ip, lrp.port, lrp.pack);
+
+			registerQueue.pop();
+		}
+		else
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * CRITICPACKETSTIMER)));
 	}
 }

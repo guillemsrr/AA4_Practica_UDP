@@ -5,6 +5,7 @@
 #include <PlayerInfo.h>
 
 
+enum class UserState {NOTLOGGEDIN, LOBBY, PLAY};
 class ClientProxy: public PlayerInfo
 {
 public:
@@ -16,6 +17,8 @@ public:
 	int numPings;
 	bool isLogging;
 	bool isLogged;
+	UserState uState;
+	float mmr;
 
 	sf::Vector2f accumMovement;
 

@@ -3,7 +3,8 @@
 
 ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigned short _port, sf::Vector2f headPos)
 {
-	id = _id;
+	appId = _id;
+	queryId = 0;
 	alias = _alias;
 	ip = _ip;
 	port = _port;
@@ -12,6 +13,8 @@ ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigne
 	accumMovement = sf::Vector2f(0.f,0.f);
 	isLogging = false;
 	isLogged = false;
+	uState = UserState::NOTLOGGEDIN;
+	mmr = 0;
 }
 
 ClientProxy::~ClientProxy()
@@ -46,7 +49,7 @@ void ClientProxy::PutBodyPositions(sf::Packet* pack)
 
 void ClientProxy::AddDataToPacket(sf::Packet* pack)
 {
-	*pack << id;
+	*pack << appId;
 	*pack << alias;
 	PutBodyPositions(pack);
 }

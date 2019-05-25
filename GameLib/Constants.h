@@ -30,7 +30,7 @@ enum Protocol
 };
 
 //timers:
-#define CRITICPACKETSTIMER 10.0f
+#define CRITICPACKETSTIMER 5.0f
 #define PINGTIMER 0.3f
 #define PERCENTLOSTTIMER 0.05f
 #define DISCONNECTTIMER 10.f

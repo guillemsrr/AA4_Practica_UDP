@@ -8,7 +8,7 @@ Player::Player()
 
 Player::Player(sf::Packet* pack)
 {
-	*pack >> id;
+	*pack >> appId;
 	*pack >> alias;
 	AddBodyPositions(pack);
 	speed = 125.0f;

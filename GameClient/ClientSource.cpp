@@ -34,6 +34,7 @@ int actualMoveID = 0;
 std::map<int, Player*> playersMap;
 std::map<int, sf::Vector2f> movesMap;//idMove i headPos
 std::map<int, std::vector<sf::Vector2f>> interpolationsMap;
+std::map<int, sf::Packet> criticPackets;
 
 Player* m_player;
 sf::Vector2f accumMove;
@@ -55,7 +56,7 @@ void InterpolatePositions();
 void RegisterUser();
 void LoginUser();
 void RegisterLoginThreadFunction();
-
+void CriticPacketsManagerThreadFunction();
 
 
 int main()
@@ -63,6 +64,10 @@ int main()
 	//Enviamos HELLO al servidor
 	std::thread helloThread(&HelloSending);
 	helloThread.detach();
+
+	//Crear thread para administrar paquetes críticos
+	std::thread criticPacketsManagerThread(&CriticPacketsManagerThreadFunction);
+	criticPacketsManagerThread.detach();
 
 
 	while (true)
@@ -80,6 +85,7 @@ int main()
 			if (ip == IP && port == PORT)//ES EL SERVER
 			{
 				int num;
+				int auxID;
 				pack >> num;
 				switch (static_cast<Protocol>(num))
 				{
@@ -88,9 +94,9 @@ int main()
 					//create the player:
 					m_player = new Player(&pack);
 					m_player->color = sf::Color::Green;
-					playersMap[m_player->id] = m_player;
+					playersMap[m_player->appId] = m_player;
 
-					std::cout << "WELCOME player "<< m_player->id << std::endl;
+					std::cout << "WELCOME player "<< m_player->appId << std::endl;
 
 					//Dar paso al registro y/o login
 
@@ -107,7 +113,7 @@ int main()
 					{
 						Player* p = new Player(&pack);
 						p->color = sf::Color::Red;
-						playersMap[p->id] = p;
+						playersMap[p->appId] = p;
 					}
 
 					//create the balls:
@@ -148,7 +154,7 @@ int main()
 				{
 					Player* p = new Player(&pack);
 					p->color = sf::Color::Red;
-					playersMap[p->id] = p;
+					playersMap[p->appId] = p;
 					board.InitializeSlither(p);
 
 					int idPack;
@@ -161,7 +167,7 @@ int main()
 					//std::cout << "PING received" << std::endl;
 					pack.clear();
 					pack << static_cast<int>(Protocol::PONG);
-					pack << m_player->id;
+					pack << m_player->appId;
 					sock.send(pack, IP, PORT);
 				}
 					break;
@@ -183,7 +189,7 @@ int main()
 					int idMove;
 					pack >> idPlayer >> idMove;
 
-					if (idPlayer == m_player->id)
+					if (idPlayer == m_player->appId)
 					{
 						//std::cout << "dentro idPlayer == m_player->id" << std::endl;
 						//vector on posem els moviments que volem esborrar
@@ -301,7 +307,7 @@ int main()
 					int idPlayer;
 					pack >> idPlayer;
 
-					if (idPlayer == m_player->id)//myself
+					if (idPlayer == m_player->appId)//myself
 					{
 						//std::lock_guard<std::mutex> guard(mtx_bodies);
 						//m_player->bodyPositions.clear();
@@ -330,8 +336,29 @@ int main()
 					break;
 				case LOGIN:
 					pack >> codigoLogin;
-					std::cout << "Recibo confirmacion del login con codigo:" << codigoLogin << std::endl;
-					loginResponse = true;
+
+					if (codigoLogin == 1)
+					{
+						loginResponse = true;
+						std::cout << "Sesion Iniciada: " << codigoLogin << std::endl;
+
+						//Ir al menu de skins/play
+
+					}
+					else
+					{
+						loginResponse = true;
+						std::cout << "Error al iniciar sesion: " << codigoLogin << std::endl;
+
+					}
+					
+					
+					break;
+				case ACK:
+					pack >> auxID;
+					std::cout << "Acknowledge recibido con idPacket: " << auxID << std::endl;
+
+					criticPackets.erase(criticPackets.find(auxID));
 					break;
 				break;
 				}
@@ -340,6 +367,27 @@ int main()
 	}
 
 	return 0;
+}
+
+void CriticPacketsManagerThreadFunction()
+{
+	//sf::Clock clock;
+
+	while (true)
+	{
+		//sf::Time t1 = clock.getElapsedTime();
+
+		//if (t1.asSeconds() > CRITICPACKETSTIMER)
+		//{
+		for (std::map<int, sf::Packet>::iterator it = criticPackets.begin(); it != criticPackets.end(); ++it)
+		{
+			sock.send(it->second, IP, PORT);
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(CRITICPACKETSTIMER * 1000)));
+		//clock.restart();
+	//}
+	}
 }
 
 void RegisterLoginThreadFunction()
@@ -402,63 +450,38 @@ void RegisterLoginThreadFunction()
 
 void RegisterUser()
 {
-
-	sf::Clock clock;
-
-
 	//Utilizar cabecera REGISTER, con username, password, email.
 	sf::Packet packRegister;
 	packRegister << static_cast<int>(Protocol::REGISTER);
-	packRegister << username << password << email;
-
-	while (!registerResponse)
-	{
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > helloSendingTimer)
-		{
+	packRegister << static_cast<int>(criticPackets.size()) << username << password << email;
+		
 			//Enviar paquete a servidor cada x segundos, hasta que  me diga ok
-			if (sock.send(packRegister, IP, PORT) != sf::UdpSocket::Status::Done)
+			criticPackets[criticPackets.size()] = packRegister;
+			/*if (sock.send(packRegister, IP, PORT) != sf::UdpSocket::Status::Done)
 				std::cout << "Error al enviar el registro" << std::endl;
 			else
-				std::cout << "Registro enviado" << std::endl;
+				std::cout << "Registro enviado" << std::endl;*/
 
-
-			clock.restart();
-		}
-
-	}
-
-	loginOrRegister = false;
+	//loginOrRegister = false;
 
 }
 
 void LoginUser()
 {
-
-	sf::Clock clock;
-
 	//Utilizar cabecera LOGIN con username y password.
 	sf::Packet packetLogin;
 	packetLogin << static_cast<int>(Protocol::LOGIN);
-	packetLogin << username << password;
+	packetLogin << static_cast<int>(criticPackets.size()) << username << password;
 
-	while (!loginResponse)
-	{
-
-		sf::Time t1 = clock.getElapsedTime();
-		if (t1.asSeconds() > helloSendingTimer)
-		{
 			//Enviar paquete a servidor cada x segundos, hasta que me diga ok
-			if (sock.send(packetLogin, IP, PORT) != sf::UdpSocket::Status::Done)
-				std::cout << "Error al enviar el login" << std::endl;
-			else
-				std::cout << "Login enviado" << std::endl;
+			criticPackets[criticPackets.size()] = packetLogin;
+			//if (sock.send(packetLogin, IP, PORT) != sf::UdpSocket::Status::Done)
+			//	std::cout << "Error al enviar el login" << std::endl;
+			//else
+			//	std::cout << "Login enviado" << std::endl;
 
 
-			clock.restart();
-		}
 
-	}
 
 	loginOrRegister = false;
 }
@@ -531,7 +554,7 @@ void GraphicsInterface()
 		if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
 		{
 			m_player->UpdatePosition(board.playerMovement);
-			board.UpdateSlither(m_player->id);
+			board.UpdateSlither(m_player->appId);
 		}
 	}
 }
@@ -555,7 +578,7 @@ void MoveSending()
 			{
 				pack.clear();
 				pack << static_cast<int>(Protocol::MOVE);
-				pack << m_player->id;
+				pack << m_player->appId;
 				pack << actualMoveID;
 
 				movesMap[actualMoveID] = m_player->bodyPositions[0];

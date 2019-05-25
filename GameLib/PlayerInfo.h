@@ -13,7 +13,8 @@ public:
 	PlayerInfo(int id, std::string alias, float x, float y, sf::Color _color);
 	~PlayerInfo();
 
-	int id;
+	int appId;
+	int queryId;
 	std::string alias;
 	std::vector<sf::Vector2f> bodyPositions;
 	sf::Color color;

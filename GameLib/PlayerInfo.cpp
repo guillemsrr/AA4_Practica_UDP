@@ -4,7 +4,7 @@
 
 PlayerInfo::PlayerInfo()
 {
-	id = 0;
+	appId = 0;
 	currentFood = 0;
 	dead = false;
 
@@ -13,7 +13,7 @@ PlayerInfo::PlayerInfo()
 
 PlayerInfo::PlayerInfo(int _id, std::string _alias, float _x, float _y, sf::Color _color)
 {
-	id = _id;
+	appId = _id;
 	alias = _alias;
 	currentFood = 0;
 

@@ -24,9 +24,6 @@ enum Protocol
 	MOVE,
 	FOOD_UPDATE,
 	KILL
-	REGISTER,
-	LOGIN,
-	UPDATEUSER
 };
 
 //timers:

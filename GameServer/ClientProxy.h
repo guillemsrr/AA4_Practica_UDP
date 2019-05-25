@@ -14,8 +14,6 @@ public:
 	sf::IpAddress ip;
 	unsigned short port;
 	int numPings;
-	bool isLogging;
-	bool isLogged;
 
 	sf::Vector2f accumMovement;
 

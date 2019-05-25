@@ -1,5 +1,4 @@
 ﻿  ServerSource.cpp
-<<<<<<< HEAD
 c:\users\guillemserralorenz\documents\aa4_practica_udp\gameserver\serversource.cpp(47): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
 c:\users\guillemserralorenz\documents\aa4_practica_udp\gameserver\serversource.cpp(363): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
 c:\users\guillemserralorenz\documents\aa4_practica_udp\gameserver\serversource.cpp(364): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
@@ -14,11 +13,3 @@ c:\users\guillemserralorenz\documents\aa4_practica_udp\gameserver\serversource.c
               T=float
           ]
   GameServer.vcxproj -> C:\Users\guillemserralorenz\Documents\AA4_Practica_UDP\x64\Debug\GameServer.exe
-=======
-c:\users\adria\desktop\aa4_practica_udp\gameserver\serversource.cpp(65): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-c:\users\adria\desktop\aa4_practica_udp\gameserver\serversource.cpp(485): warning C4101: 'res': variable local sin referencia
-c:\users\adria\desktop\aa4_practica_udp\gameserver\serversource.cpp(564): warning C4267: '=': conversión de 'size_t' a 'int'; posible pérdida de datos
-c:\users\adria\desktop\aa4_practica_udp\gameserver\serversource.cpp(685): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-c:\users\adria\desktop\aa4_practica_udp\gameserver\serversource.cpp(686): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-  GameServer.vcxproj -> C:\Users\adria\Desktop\AA4_Practica_UDP\x64\Debug\GameServer.exe
->>>>>>> MySQLConnection

@@ -23,7 +23,10 @@ enum Protocol
 	DISCONNECTED,
 	MOVE,
 	FOOD_UPDATE,
-	KILL
+	KILL,
+	REGISTER,
+	LOGIN,
+	UPDATEUSER
 };
 
 //timers:

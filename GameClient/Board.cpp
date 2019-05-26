@@ -75,10 +75,18 @@ void Board::DrawBoard(std::mutex& mtx)
 		Slither* slither = it->second;
 		if (!slither->IsPlayerDead())
 		{
+			//std::cout << "FOR START - Body circles @Slither size: " << (int)slither->bodyCircles.size() << std::endl;
 			for (int i = (int)slither->bodyCircles.size() - 1; i >= 0 ; i--)
 			{
+				if ((int)slither->bodyCircles.size() != (int)slither->player->bodyPositions.size())
+				{
+					std::cout << "ERROR: bodyCircles.size @slither != bodyPositions.size @player - " << (int)slither->bodyCircles.size() << ", " << (int)slither->player->bodyPositions.size() << std::endl;
+				}
+				//std::cout << "FOR IN - Body circles @Slither size: " << (int)slither->bodyCircles.size() << std::endl;
+				//std::cout << "FOR IN - Body positions @Player size: " << (int)slither->player->bodyPositions.size() << std::endl;
 				window.draw(slither->bodyCircles[i]);
 			}
+			//std::cout << "FOR END - Body circles @Slither size: " << (int)slither->bodyCircles.size() << std::endl;
 		}
 	}
 

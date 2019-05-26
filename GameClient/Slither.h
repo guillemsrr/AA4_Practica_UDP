@@ -14,9 +14,9 @@ public:
 
 	std::vector<sf::CircleShape> bodyCircles;
 	bool IsPlayerDead();
+	Player* player;
 
 private:
-	Player* player;
 	float radius;
 	const float radiusCirclesRelation = 1.f;
 	void UpdateRadius();

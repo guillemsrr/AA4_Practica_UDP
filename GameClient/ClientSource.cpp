@@ -66,7 +66,8 @@ enum class SceneStage
 	SKIN_SELECT,
 	GAME,
 	DEATH,
-	WAITINGFORGAME
+	WAITINGFORGAME,
+	WIN
 };
 
 SceneStage sceneStage = SceneStage::LOGIN;
@@ -325,6 +326,11 @@ int main()
 					}
 				}
 					break;
+				case WIN:
+				{
+					sceneStage = SceneStage::WIN;
+				}
+					break;
 				case REGISTER:
 				{
 					pack >> codigoRegistro;
@@ -577,6 +583,10 @@ void ButtonFunctionality()
 	if (lastPressedButtonID == btnBackToSkinSelectionID)
 	{
 		//From Death screen to Skin selection
+		playersMap.clear();
+		playersMap[m_player->appId] = m_player;
+		board.slithersMap.clear();
+		interpolationsMap.clear();
 		sceneStage = SceneStage::SKIN_SELECT;
 	}
 	else if (lastPressedButtonID == btnRedID)
@@ -750,6 +760,10 @@ void GraphicsInterface()
 				sceneObjs.AddStandaloneRect(sf::Vector2f(SCREEN_WIDTH * .8f, SCREEN_HEIGHT * .8f), sf::Vector2f(SCREEN_WIDTH * .1f, SCREEN_HEIGHT * .1f), MENUS_BG_RECT_COLOR, 10, BTN_DEF_COLOR);
 				sceneObjs.AddText("Searching for a decent(say hi to noobs) game", sf::Color::White, font, 3, 15, sf::Vector2i(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), sf::Vector2f(.5f, .5f));
 				break;
+			case SceneStage::WIN:
+				sceneObjs.AddText("You stand victorious above all other slithes!", sf::Color::White, font, 3, 15, sf::Vector2i(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), sf::Vector2f(.5f, .5f), sf::Color::Red);
+				sceneObjs.AddButton(btnBackToSkinSelectionID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f), sf::Vector2i(SCREEN_WIDTH * .5f, SCREEN_HEIGHT * .7f), sf::Vector2f(.5f, .5f), font, "Exit");
+				break;
 			}
 
 			lastSceneStage = sceneStage;
@@ -829,20 +843,21 @@ void GraphicsInterface()
 			sceneObjs.DrawScene(board.window);
 			board.DisplayWindow();
 		}
-		else if (sceneStage == SceneStage::GAME || sceneStage == SceneStage::DEATH)
+		else if (sceneStage == SceneStage::GAME || sceneStage == SceneStage::DEATH || sceneStage == SceneStage::WIN)
 		{
 			//std::cout << "Stage draw" << std::endl;
 			bool deathScreen = (sceneStage == SceneStage::DEATH);
+			bool winScreen = (sceneStage == SceneStage::WIN);
 			board.ClearWindow();
 			board.DrawBoard(mtx_food);
-			if (deathScreen)
+			if (deathScreen || winScreen)
 			{
 				//Draw sceneObjs
 				sceneObjs.DrawScene(board.window);
 			}
 			board.DisplayWindow();
 
-			if (deathScreen)
+			if (deathScreen || winScreen)
 			{
 				mouseCoords = sf::Mouse::getPosition(board.window);
 				// check all the window's events that were triggered since the last iteration of the loop
@@ -928,7 +943,7 @@ void MoveSending()
 				pack.clear();
 				pack << static_cast<int>(Protocol::MOVE);
 				pack << m_player->appId;
-				std::cout << "APPid on move: " << m_player->appId << std::endl;
+				//std::cout << "APPid on move: " << m_player->appId << std::endl;
 				pack << actualMoveID;
 
 				movesMap[actualMoveID] = m_player->bodyPositions[0];
@@ -973,17 +988,17 @@ void InterpolatePositions()
 		if (sceneStage == SceneStage::GAME)
 		{
 			std::vector<std::map<int, std::vector<sf::Vector2f>>::iterator> toErase;//vector per eliminar despr�s
+			mtx_bodies.lock();
 			for (std::map<int, std::vector<sf::Vector2f>>::iterator it = interpolationsMap.begin(); it != interpolationsMap.end(); ++it)
 			{
+				
 				if (playersMap[it->first]->InterpolateTo(it->second, 0.5f))
 				{
 					//std::cout << "interpolation arrived and erased" << std::endl;
 					toErase.push_back(it);
 				}
-
-				mtx_bodies.lock();
 				board.UpdateSlither(it->first);
-				mtx_bodies.unlock();
+				
 
 				//std::cout << "interpolating" << std::endl;
 			}
@@ -993,6 +1008,7 @@ void InterpolatePositions()
 				interpolationsMap.erase(toErase[0]);
 				toErase.erase(toErase.begin());
 			}
+			mtx_bodies.unlock();
 		}
 
 			//std::cout << "THREADS: INTERP going to sleep for " << interpolationTimer * 1000 << " Milliseconds." << std::endl;

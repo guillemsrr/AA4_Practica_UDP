@@ -1,21 +1,22 @@
-﻿  GameProxy.cpp
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\gameproxy.cpp(27): warning C4244: '=': conversión de 'int' a 'T'; posible pérdida de datos
+﻿  ClientProxy.cpp
+  GameProxy.cpp
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\gameproxy.cpp(27): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\gameproxy.cpp(28): warning C4244: '=': conversión de 'int' a 'T'; posible pérdida de datos
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\gameproxy.cpp(28): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
   ServerSource.cpp
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(71): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(608): warning C4101: 'res': variable local sin referencia
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(687): warning C4267: '=': conversión de 'size_t' a 'int'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(778): warning C4244: 'inicializando': conversión de 'double' a 'float'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(812): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(813): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameserver\serversource.cpp(981): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-  Generando código...
-  GameServer.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameServer.exe
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(71): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(608): warning C4101: 'res': unreferenced local variable
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(687): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(778): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(812): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(813): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+d:\users\bleinz\documents\slitherio\aa4_practica_udp\gameserver\serversource.cpp(981): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
+  GameServer.vcxproj -> D:\users\Bleinz\Documents\Slitherio\AA4_Practica_UDP\x64\Debug\GameServer.exe

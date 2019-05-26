@@ -159,8 +159,14 @@ void GameProxy::PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientPr
 				aux = i;
 		}
 
-
 		idPlayersInGame.erase(idPlayersInGame.begin() +aux);
 		clientProxies[idPlayer]->dead = true;
+
+		if (idPlayersInGame.size() == 1)
+		{
+			sf::Packet pack2;
+			pack2 << Protocol::WIN;
+			sock.send(pack2, clientProxies[idPlayersInGame[0]]->ip, clientProxies[idPlayersInGame[0]]->port);
+		}
 	}
 }

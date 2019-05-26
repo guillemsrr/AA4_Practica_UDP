@@ -11,6 +11,8 @@
 
 #define PERCENT_PACKETLOSS 0.05f
 
+#define MIN_PLAYERS_PER_GAME 2
+
 enum Protocol
 {
 	HELLO,
@@ -26,7 +28,9 @@ enum Protocol
 	KILL,
 	REGISTER,
 	LOGIN,
-	UPDATEUSER
+	UPDATEUSER,
+	FINDGAME,
+	STARTGAME
 };
 
 //timers:

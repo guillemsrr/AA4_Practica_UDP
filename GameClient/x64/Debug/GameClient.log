@@ -1,2 +1,55 @@
-﻿  Slither.cpp
-  GameClient.vcxproj -> D:\users\Bleinz\Documents\Slitherio\AA4_Practica_UDP\x64\Debug\GameClient.exe
+﻿  ClientSource.cpp
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(473): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(491): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(633): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(675): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(677): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(682): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(687): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(692): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(697): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(702): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(707): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(712): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+c:\users\usuario\desktop\udp-redes\aa4_practica_udp\gameclient\clientsource.cpp(731): warning C4244: 'argumento': conversión de 'float' a 'T'; posible pérdida de datos
+          with
+          [
+              T=int
+          ]
+  GameClient.vcxproj -> C:\Users\usuario\Desktop\UDP-Redes\AA4_Practica_UDP\x64\Debug\GameClient.exe

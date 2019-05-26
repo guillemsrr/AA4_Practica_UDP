@@ -4,6 +4,7 @@
 #include <SFML\Network.hpp>
 #include "ClientProxy.h"
 #include "CriticPack.h"
+#include "GameProxy.h"
 #include <Constants.h>
 #include <thread>
 #include <math.h>
@@ -27,7 +28,6 @@ typedef struct {
 
 
 sf::UdpSocket sock;
-const int maxFood = 100;
 const float minFoodDist = 200.f;
 
 //lists / maps
@@ -35,8 +35,8 @@ std::map<int, ClientProxy*> clientProxies;
 std::map<int, CriticPack*> criticPackets;
 std::queue<LoginRegisterPack> loginQueue;
 std::queue<LoginRegisterPack> registerQueue;
-
-std::vector<Food*> foodVector;
+std::vector<int> clientsSearchingForGame;
+std::vector<GameProxy*> games;
 
 
 //declarations:
@@ -45,7 +45,6 @@ void PingThreadFunction();
 void DisconnectionCheckerThreadFunction();
 void CriticPacketsManagerThreadFunction();
 void MovementControlThread();
-void FoodUpdateThread();
 //other:
 void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack);
@@ -55,13 +54,14 @@ void UpdatePlayerBBDDInfo(int idPlayer);
 void ComputeMMRFromPlayer(int idPlayer, int partidasGanadas, int partidasJugadas, int totalKills, int partidasNoGanadas);
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AccumMovement(sf::Packet pack);
-void MovementControl(int idPlayer, int idMove);
-void InitializeFood();
 bool RandomPacketLost();
 float Distance(sf::Vector2f v1, sf::Vector2f v2);
-void PlayerCollisionCheck(int idPlayer);
 void loginThreadFunction();
 void registerThreadFunction();
+void MatchMakingFunction();
+void swap(int *xp, int *yp);
+void BubbleSort(std::vector<int> &arr);
+void CreateGame(std::vector<int> &arr);
 
 
 int main()
@@ -101,12 +101,10 @@ int main()
 	std::thread registerThread(&registerThreadFunction);
 	registerThread.detach();
 
-	//initialize food:
-	InitializeFood();
+	//Crear thread para administrar el matchmaking
+	std::thread matchmakingThread(&MatchMakingFunction);
+	matchmakingThread.detach();
 
-	//Thread de food
-	//std::thread foodUpdateThread(&FoodUpdateThread);
-	//foodUpdateThread.detach();
 
 	#pragma endregion
 
@@ -125,7 +123,7 @@ int main()
 		{
 			//std::cout << "Reading package" << std::endl;
 			int num;
-			int auxID;
+			int auxIDPack, auxIDPlayer;
 			sf::Packet packS;
 			LoginRegisterPack lrp;
 			pack >> num;
@@ -137,9 +135,8 @@ int main()
 				break;
 			case ACK:
 				std::cout << "ACK received" << std::endl;
-				int auxIdPack;
-				pack >> auxIdPack;
-				criticPackets.erase(criticPackets.find(auxIdPack));
+				pack >> auxIDPack;
+				criticPackets.erase(criticPackets.find(auxIDPack));
 				break;
 			case PONG:
 				//std::cout << "PONG received" << std::endl;
@@ -153,12 +150,12 @@ int main()
 				break;
 			case REGISTER:
 				std::cout << "Petición de registro recibida." << std::endl;
-				pack >> auxID;
+				pack >> auxIDPack;
 				//Mandar ACK de vuelta
 				
 				packS.clear();
 				packS << static_cast<int>(Protocol::ACK);
-				packS << auxID;
+				packS << auxIDPack;
 				sock.send(packS, ip, port);
 
 				//Añadir pack a la queue
@@ -172,12 +169,12 @@ int main()
 				break;
 			case LOGIN:
 				std::cout << "Petición de login recibida." << std::endl;
-				pack >> auxID;
+				pack >> auxIDPack;
 				//Mandar ACK de vuelta
 
 				packS.clear();
 				packS << static_cast<int>(Protocol::ACK);
-				packS << auxID;
+				packS << auxIDPack;
 				sock.send(packS, ip, port);
 
 				//Añadir pack a la queue
@@ -188,6 +185,26 @@ int main()
 				loginQueue.push(lrp);
 				
 				//AnswerLogin(ip, port, pack);
+				break;
+			case FINDGAME:
+				pack >> auxIDPack;
+				pack >> auxIDPlayer;
+				std::cout << "Petición de buscar partida recibida del usuario con id: " << auxIDPlayer << std::endl;
+
+				//Mandar ACK de vuelta
+				packS.clear();
+				packS << static_cast<int>(Protocol::ACK);
+				packS << auxIDPack;
+				sock.send(packS, ip, port);
+
+				pack >> num;
+
+				//Asignar el color del player
+				clientProxies[auxIDPlayer]->SetPlayerColor(static_cast<SkinColors>(num));
+
+				//Añadir el player a la matchmaking pool
+				clientsSearchingForGame.push_back(auxIDPlayer);
+
 				break;
 			}
 		}
@@ -229,34 +246,37 @@ void PingThreadFunction()
 			}
 
 			//ERE LAYS THE CULPRIT
-			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+			for (int j = 0; j < games.size(); j++)
 			{
-				packFood << static_cast<int>(Protocol::FOOD_UPDATE);
-
-				//tota la info del menjar:
-				//només els que té més aprop
-				std::vector<Food*> closeFood;
-
-				for (int i = 0; i < (int)foodVector.size(); i++)
+				for (int z=0; z<games[j]->idPlayersInGame.size(); z++)
 				{
-					if (Distance(it->second->bodyPositions[0], foodVector[i]->position) < minFoodDist)
+					packFood << static_cast<int>(Protocol::FOOD_UPDATE);
+
+					//tota la info del menjar:
+					//només els que té més aprop
+					std::vector<Food*> closeFood;
+
+					for (int i = 0; i < (int)games[j]->foodVector.size(); i++)
 					{
-						closeFood.push_back(foodVector[i]);
+						if (Distance(clientProxies[games[j]->idPlayersInGame[z]]->bodyPositions[0], games[j]->foodVector[i]->position) < minFoodDist)
+						{
+							closeFood.push_back(games[j]->foodVector[i]);
+						}
 					}
-				}
-				//num foods:
-				packFood << static_cast<int>(closeFood.size());
-				for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
-				{
-					Food* food = *closeit;
-					//pack << food->id;
-					packFood << food->position.x;
-					packFood << food->position.y;
-					//pack << food->color; //no puc passar el color?
-				}
+					//num foods:
+					packFood << static_cast<int>(closeFood.size());
+					for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
+					{
+						Food* food = *closeit;
+						//pack << food->id;
+						packFood << food->position.x;
+						packFood << food->position.y;
+						//pack << food->color; //no puc passar el color?
+					}
 
-				sock.send(packFood, it->second->ip, it->second->port);
-				packFood.clear();
+					sock.send(packFood, clientProxies[games[j]->idPlayersInGame[z]]->ip, clientProxies[games[j]->idPlayersInGame[z]]->port);
+					packFood.clear();
+				}
 			}
 
 			//std::cout << "THREADS: PING going to sleep for " << PINGTIMER * 1000 << " Milliseconds." << std::endl;
@@ -348,13 +368,17 @@ void MovementControlThread()
 		//sf::Time t1 = clock.getElapsedTime();
 		//if (t1.asSeconds() > MOVEMENTUPDATETIMER)
 		//{
-			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+		for (int i = 0; i < games.size(); i++)
+		{
+			for (int j=0; j<games[i]->idPlayersInGame.size(); j++)
 			{
-				if (abs(it->second->accumMovement.x) + abs(it->second->accumMovement.y) > 0)
+				if (abs(clientProxies[games[i]->idPlayersInGame[j]]->accumMovement.x) + abs(clientProxies[games[i]->idPlayersInGame[j]]->accumMovement.y) > 0)
 				{
-					MovementControl(it->second->appId, it->second->lastIdMove);
+					games[i]->MovementControl(sock, clientProxies, clientProxies[games[i]->idPlayersInGame[j]]->appId, clientProxies[games[i]->idPlayersInGame[j]]->lastIdMove);
 				}
 			}
+		}
+			
 
 			//std::cout << "THREADS: MOVEMENT going to sleep for " << MOVEMENTUPDATETIMER * 1000 << " Milliseconds." << std::endl;
 			std::this_thread::sleep_for(std::chrono::milliseconds((int)(MOVEMENTUPDATETIMER * 1000)));
@@ -758,53 +782,6 @@ void ComputeMMRFromPlayer(int idPlayer, int partidasGanadas, int partidasJugadas
 	}
 }
 
-void FoodUpdateThread()
-{
-	//sf::Clock clock;
-	sf::Packet pack;
-
-	while (true)
-	{
-		//sf::Time t1 = clock.getElapsedTime();
-		//if (t1.asSeconds() > FOODUPDATETIMER)
-		//{
-			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
-			{
-				pack << static_cast<int>(Protocol::FOOD_UPDATE);
-
-				//tota la info del menjar:
-				//només els que té més aprop
-				std::vector<Food*> closeFood;
-				for (int i = 0; i < (int)foodVector.size(); i++)
-				{
-					if (Distance(it->second->bodyPositions[0], foodVector[i]->position) < minFoodDist)
-					{
-						closeFood.push_back(foodVector[i]);
-					}
-				}
-				//num foods:
-				pack << static_cast<int>(closeFood.size());
-				for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
-				{
-					Food* food = *closeit;
-					//pack << food->id;
-					pack << food->position.x;
-					pack << food->position.y;
-					//pack << food->color; //no puc passar el color?
-				}
-
-				sock.send(pack, it->second->ip, it->second->port);
-				pack.clear();
-			}
-
-			//std::cout << "THREADS: FOOD going to sleep for " << FOODUPDATETIMER * 1000 << " Milliseconds." << std::endl;
-			std::this_thread::sleep_for(std::chrono::milliseconds((int)(FOODUPDATETIMER * 1000)));
-			//std::cout << "THREADS: FOOD awakened" << std::endl;
-			//clock.restart();
-		//}
-	}
-}
-
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 {
 	std::string alias;
@@ -842,61 +819,10 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		return;
 	}
 
-	//introduïm les dades del player
 	pack.clear();
 	pack << static_cast<int>(Protocol::WELCOME);
-	newClient->AddDataToPacket(&pack);
-
-	//std::cout << "INITIAL POS x (new Client) " << newClient->bodyPositions[0].x << " y: " << newClient->bodyPositions[0].y << std::endl;
-	
-	//els altres players:
-	pack << static_cast<int>(clientProxies.size());
-	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
-	{
-		if (it->second->appId != newClient->appId)
-		{
-			it->second->AddDataToPacket(&pack);
-		}
-	}
-
-	//tota la info del menjar:
-	//només els que té més aprop
-	std::vector<Food*> closeFood;
-	for (int i = 0; i < (int)foodVector.size(); i++)
-	{
-		if (Distance(newClient->bodyPositions[0], foodVector[i]->position) < minFoodDist)
-		{
-			closeFood.push_back(foodVector[i]);
-		}
-	}
-
-	//num foods:
-	pack << static_cast<int>(closeFood.size());
-	for (std::vector<Food*>::iterator it = closeFood.begin(); it != closeFood.end(); ++it)
-	{
-		Food* food = *it;
-		pack << food->position.x;
-		pack << food->position.y;
-		//pack << food->color; //no puc passar el color?
-	}
-
+	newClient->AddDataToPacket(&pack);		//?¿
 	sock.send(pack, ip, port);
-
-	//Enviar NEW_PLAYER a todos los demás clientes
-	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
-	{
-		//com que cada vegada hem d'anar posant un id del packet diferent, anem tornant a omplir el packet
-		pack.clear();
-		pack << static_cast<int>(Protocol::NEW_PLAYER);
-		newClient->AddDataToPacket(&pack);
-		int idPack = (int)criticPackets.size();
-		pack << idPack;
-
-		CriticPack* cp = new CriticPack((int)criticPackets.size(), pack, it->second->ip, it->second->port);
-		criticPackets[idPack] = cp;
-		std::cout << "sending NEW_PLAYER" << std::endl;
-		sock.send(pack, it->second->ip, it->second->port);
-	}
 
 	//finalment afegim el nou client al map
 	if(!clientExists)
@@ -922,84 +848,6 @@ void AccumMovement(sf::Packet pack)
 	clientProxies[idPlayer]->accumMovement += sumPos;//en comptes de tractar-lo directament, l'acumulo i es tractarà en el thread de moviment
 	clientProxies[idPlayer]->lastIdMove = idMove;
 	std::cout << "accummovement after" << std::endl;
-}
-
-void FoodCollisionCheck(int pID, std::vector<sf::Vector2f> playerPositions, float playerBodyRadius)
-{
-	int i = 0;
-	//std::cout << "Food vector size: " << (int)foodVector.size() << std::endl;
-	while (i < (int)foodVector.size() - 1)
-	{
-		bool collided = false;
-		for (int j = 0; j < (int)playerPositions.size(); j++)
-		{
-			if (Distance(foodVector[i]->position, playerPositions[j]) < playerBodyRadius)
-			{
-				collided = true;
-				break;
-			}
-		}
-		if (/*Collision*/collided)
-		{
-			//Food eaten
-			foodVector.erase(foodVector.begin() + i);//comprovar que funcioni
-
-			clientProxies[pID]->EatBall();
-		}
-		else
-		{
-			i++;
-		}
-	}
-}
-
-void MovementControl(int idPlayer, int idMove)
-{
-	sf::Vector2f possiblePos = clientProxies[idPlayer]->SumToHeadPosition();
-
-	//controlar la posició
-	if (possiblePos.x < 0 || possiblePos.x > SCREEN_WIDTH || possiblePos.y < 0 || possiblePos.y > SCREEN_HEIGHT)
-	{
-		//el posem just al límit de la pantalla? o simplement on era abans de moure's?
-		//si no fem update position, simplement el retornarem on era.
-	}
-	else
-	{
-		//tot correcte, movem el player
-		clientProxies[idPlayer]->UpdatePosition(possiblePos);
-	}
-
-	clientProxies[idPlayer]->accumMovement = sf::Vector2f(0,0);
-
-	//ho enviem a tots els players
-	sf::Packet pack;
-	pack << static_cast<int>(Protocol::MOVE);
-	pack << idPlayer;
-	pack << idMove;
-
-	clientProxies[idPlayer]->PutBodyPositions(&pack);
-
-	std::cout << "body positions: " << (int)clientProxies[idPlayer]->bodyPositions.size() << std::endl;
-
-	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
-	{
-		sock.send(pack, it->second->ip, it->second->port);
-	}
-
-	FoodCollisionCheck(idPlayer, clientProxies[idPlayer]->bodyPositions, 13.f);//13 provisional
-	PlayerCollisionCheck(idPlayer);
-	//std::cout << "movement control" << std::endl;
-}
-
-void InitializeFood()
-{
-	for (int i = 0; i < maxFood; i++)
-	{
-		sf::Vector2f pos;
-		pos.x = rand() % SCREEN_WIDTH;
-		pos.y = rand() % SCREEN_HEIGHT;
-		foodVector.push_back(new Food(pos));
-	}
 }
 
 float GetRandomFloat()
@@ -1028,51 +876,6 @@ float Distance(sf::Vector2f v1, sf::Vector2f v2)
 {
 	sf::Vector2f v = v2 - v1;
 	return sqrt(v.x*v.x + v.y*v.y);
-}
-
-void PlayerCollisionCheck(int idPlayer)
-{
-	bool kill = false;
-	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
-	{
-		if (it->first != idPlayer && !it->second->dead)
-		{
-			for (int i = 0; i < (int)it->second->bodyPositions.size(); i++)
-			{
-				if (Distance(clientProxies[idPlayer]->bodyPositions[0], it->second->bodyPositions[i]) <13.f)
-				{
-					std::cout << "collisioned" << std::endl;
-					kill = true;
-					break;
-				}
-			}
-		}
-	}
-
-	if (kill)
-	{
-		//spawn balls
-		for (int i = 0; i < (int)clientProxies[idPlayer]->bodyPositions.size(); i++)
-		{
-			Food* food = new Food(clientProxies[idPlayer]->bodyPositions[i]);
-			foodVector.push_back(food);
-		}
-
-		sf::Packet pack;
-		pack << Protocol::KILL;
-		pack << idPlayer;
-
-		for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
-		{
-			if (sock.send(pack, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
-			{
-				//error
-			}
-		}
-		
-		//clientProxies.erase(idPlayer);
-		clientProxies[idPlayer]->dead = true;
-	}
 }
 
 void loginThreadFunction()
@@ -1109,4 +912,70 @@ void registerThreadFunction()
 		else
 			std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * CRITICPACKETSTIMER)));
 	}
+}
+
+void MatchMakingFunction()
+{
+	while (true)
+	{
+		if (clientsSearchingForGame.size() >= MIN_PLAYERS_PER_GAME)
+		{
+			BubbleSort(clientsSearchingForGame);
+
+			std::vector<int> matchedPlayers;
+			for (int i = 0 ; i < MIN_PLAYERS_PER_GAME; i++)
+			{
+				matchedPlayers.push_back(clientsSearchingForGame[clientsSearchingForGame.size()-1]);
+				clientsSearchingForGame.pop_back();
+			}
+			//Crear partida
+			CreateGame(matchedPlayers);
+			std::cout << "Matched  players. ID: " << matchedPlayers[0] << ", ID: " << matchedPlayers[1] << std::endl;
+		}
+		else
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * CRITICPACKETSTIMER)));
+	}
+}
+
+void swap(int *xp, int *yp)
+{
+	int temp = *xp;
+	*xp = *yp;
+	*yp = temp;
+}
+
+void BubbleSort(std::vector<int> &arr)
+{
+	int i, j;
+	for (i = 0; i < arr.size() - 1; i++)
+	{
+		for (j = 0; j < arr.size() - i - 1; j++)
+		{
+			if (clientProxies[arr[j]]->mmr > clientProxies[arr[j + 1]]->mmr)
+			{
+				swap(&arr[j], &arr[j + 1]);
+			}
+		}
+	}				
+}
+
+void CreateGame(std::vector<int> &arr)
+{
+	//Pasar datos de todos los jugadores de la partida a todos los jugadores
+	sf::Packet pack;
+	pack << static_cast<int>(Protocol::STARTGAME);
+	pack << static_cast<int>(arr.size());
+	for (int i = 0; i < arr.size(); i++)
+	{
+		clientProxies[arr[i]]->AddDataToPacket(&pack);
+	}
+
+	//Enviar el paquete a todos los jugadores
+	for (int i = 0; i < arr.size(); i++)
+	{
+		sock.send(pack, clientProxies[arr[i]]->ip, clientProxies[arr[i]]->port);
+	}
+
+	games.push_back(new GameProxy(games.size(), arr));
+
 }

@@ -24,12 +24,18 @@
     <ClCompile Include="ServerSource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameProxy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientProxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CriticPack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameProxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

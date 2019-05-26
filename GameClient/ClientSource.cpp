@@ -58,13 +58,15 @@ void RegisterUser();
 void LoginUser();
 void RegisterLoginThreadFunction();
 void CriticPacketsManagerThreadFunction();
+void FindGameFunction();
 
 enum class SceneStage
 {
 	LOGIN,
 	SKIN_SELECT,
 	GAME,
-	DEATH
+	DEATH,
+	WAITINGFORGAME
 };
 
 SceneStage sceneStage = SceneStage::LOGIN;
@@ -116,61 +118,23 @@ int main()
 				{
 				case WELCOME:
 				{
-					//create the player:
+					//Crear jugador propio
 					m_player = new Player(&pack);
 					playersMap[m_player->appId] = m_player;
 
 					std::cout << "WELCOME player "<< m_player->appId << std::endl;
+
 
 					//Dar paso al registro y/o login
 
 					std::thread RegisterLoginThread(RegisterLoginThreadFunction);
 					RegisterLoginThread.detach();
 
-
-					//ESTO DEBERIA IR DESPUES DEL LOGIN SI O SI
-
-					//create the others:
-					int sizeOthers;
-					pack >> sizeOthers;
-					for (int i = 0; i < sizeOthers; i++)
-					{
-						Player* p = new Player(&pack);
-						playersMap[p->appId] = p;
-					}
-
-					//create the balls:
-					int numFood;
-					pack >> numFood;
-					//std::cout << "num balls: " << numFood << std::endl;
-
-					std::vector<sf::Vector2f> foodPositions;
-
-					for (int i = 0; i < numFood; i++)
-					{
-						int id;
-						sf::Vector2f pos;
-						pack >> pos.x;
-						pack >> pos.y;
-						foodPositions.push_back(pos);
-					}
-
-					if (true)
-					{
-						std::lock_guard<std::mutex> guard(mtx_food);
-						board.foodPositions = foodPositions;//aix� s'hauria de millorar..
-					}
-
 					received = true;
 
 					std::thread graphicsInterface(&GraphicsInterface);
 					graphicsInterface.detach();
 
-					std::thread accumControlThread(&MoveSending);
-					accumControlThread.detach();
-
-					std::thread interpolationsThread(&InterpolatePositions);
-					interpolationsThread.detach();
 				}
 					break;
 				case NEW_PLAYER:
@@ -382,6 +346,34 @@ int main()
 					std::cout << "Acknowledge recibido con idPacket: " << auxID << std::endl;
 
 					criticPackets.erase(criticPackets.find(auxID));
+					break;
+				case STARTGAME:
+					//Me pasan la informacion de todos los players de la partida, incluido yo mismo
+					int size;
+					pack >> size;
+
+					for (int i = 0; i < size; i++)
+					{
+						Player* p = new Player(&pack);
+						if (m_player->appId == p->appId)
+						{
+							//Sustituir datos de ownPlayer
+							delete m_player;
+							m_player = p;
+						}
+						playersMap[p->appId] = p;
+						
+					}
+
+					sceneStage = SceneStage::GAME;
+
+
+					std::thread accumControlThread(&MoveSending);
+					accumControlThread.detach();
+
+					std::thread interpolationsThread(&InterpolatePositions);
+					interpolationsThread.detach();
+
 					break;
 				break;
 				}
@@ -623,9 +615,23 @@ void ButtonFunctionality()
 	if (skinSelected)
 	{
 		//Start/join game
+		FindGameFunction();
 
-		sceneStage = SceneStage::GAME;
+		sceneStage = SceneStage::WAITINGFORGAME;
 	}
+}
+
+void FindGameFunction()
+{
+	//Enviar al servidor que quiero buscar una partida
+	sf::Packet packFindGame;
+	packFindGame << static_cast<int>(Protocol::FINDGAME);
+	packFindGame << static_cast<int>(criticPackets.size()) << m_player->appId;
+	packFindGame << static_cast<int>(m_player->skinColor);
+
+
+	criticPackets[criticPackets.size()] = packFindGame;
+
 }
 
 void GraphicsInterface()
@@ -724,6 +730,10 @@ void GraphicsInterface()
 				sceneObjs.AddText("You Died, eat faster next time.", sf::Color::White, font, 3, 15, sf::Vector2i(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), sf::Vector2f(.5f, .5f), sf::Color::Red);
 				sceneObjs.AddButton(btnBackToSkinSelectionID, sf::Vector2f(SCREEN_WIDTH * .2f * .8f, SCREEN_HEIGHT * .2f), sf::Vector2i(SCREEN_WIDTH * .5f, SCREEN_HEIGHT * .7f), sf::Vector2f(.5f, .5f), font, "Exit");
 				break;
+			case SceneStage::WAITINGFORGAME:
+				sceneObjs.AddStandaloneRect(sf::Vector2f(SCREEN_WIDTH * .8f, SCREEN_HEIGHT * .8f), sf::Vector2f(SCREEN_WIDTH * .1f, SCREEN_HEIGHT * .1f), MENUS_BG_RECT_COLOR, 10, BTN_DEF_COLOR);
+				sceneObjs.AddText("Searching for a decent(say hi to noobs) game", sf::Color::White, font, 3, 15, sf::Vector2i(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), sf::Vector2f(.5f, .5f));
+				break;
 			}
 
 			lastSceneStage = sceneStage;
@@ -795,6 +805,13 @@ void GraphicsInterface()
 				UpdateButtonAppearance(sceneObjs.buttons[btnIdgID], btnIdgID);
 				UpdateButtonAppearance(sceneObjs.buttons[btnVltID], btnVltID);
 			}
+		}
+		else if (sceneStage == SceneStage::WAITINGFORGAME)
+		{
+			board.ClearWindow();
+			//Draw sceneObjs
+			sceneObjs.DrawScene(board.window);
+			board.DisplayWindow();
 		}
 		else if (sceneStage == SceneStage::GAME || sceneStage == SceneStage::DEATH)
 		{

@@ -158,11 +158,13 @@
   <ItemGroup>
     <ClCompile Include="ClientProxy.cpp" />
     <ClCompile Include="CriticPack.cpp" />
+    <ClCompile Include="GameProxy.cpp" />
     <ClCompile Include="ServerSource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientProxy.h" />
     <ClInclude Include="CriticPack.h" />
+    <ClInclude Include="GameProxy.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

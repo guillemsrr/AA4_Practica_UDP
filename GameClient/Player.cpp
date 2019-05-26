@@ -34,30 +34,32 @@ void Player::AddBodyPositions(sf::Packet* pack)
 		*pack >> x;
 		*pack >> y;
 
+
 		pos.x = (float)x / 1000.f;
 		pos.y = (float)y / 1000.f;
-		bodyPositions.push_back(pos);
+
+		CreateBodyPosition(true, pos);
 	}
 
 	bodyPositions[0];
 }
 
-void Player::UpdatePosition(sf::Packet* pack)
-{
-	int numPos;
-	*pack >> numPos;
-	
-	while (numPos > (int)bodyPositions.size())
-	{
-		CreateBodyPosition();
-	}
-
-	for (int i = 0; i < bodyPositions.size(); i++)
-	{
-		*pack >> bodyPositions[i].x;
-		*pack >> bodyPositions[i].y;
-	}
-}
+//void Player::UpdatePosition(sf::Packet* pack)
+//{
+//	int numPos;
+//	*pack >> numPos;
+//	
+//	while (numPos > (int)bodyPositions.size())
+//	{
+//		CreateBodyPosition(false, sf::Vector2f(0.0f, 0.0f));
+//	}
+//
+//	for (int i = 0; i < bodyPositions.size(); i++)
+//	{
+//		*pack >> bodyPositions[i].x;
+//		*pack >> bodyPositions[i].y;
+//	}
+//}
 
 std::vector<sf::Vector2f> Player::GetFuturePositions(sf::Packet* pack)
 {
@@ -67,7 +69,7 @@ std::vector<sf::Vector2f> Player::GetFuturePositions(sf::Packet* pack)
 
 	while (numPos > (int)bodyPositions.size())
 	{
-		CreateBodyPosition();
+		CreateBodyPosition(false, sf::Vector2f(0.0f, 0.0f));
 	}
 
 	std::vector<sf::Vector2f> futureBodyPositions;
@@ -94,7 +96,7 @@ void Player::UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Pack
 {
 	while (numPos > (int)bodyPositions.size())
 	{
-		CreateBodyPosition();
+		CreateBodyPosition(false, sf::Vector2f(0.0f, 0.0f));
 	}
 
 	bodyPositions[0] = headPos;

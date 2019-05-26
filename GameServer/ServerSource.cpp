@@ -118,99 +118,101 @@ int main()
 		{
 			std::cout << "Error on receiving packet ip:" << ip.toString() << std::endl;
 		}
-
-		if (RandomPacketLost())
-		{
-			//std::cout << "Reading package" << std::endl;
-			int num;
-			int auxIDPack, auxIDPlayer;
-			sf::Packet packS;
-			LoginRegisterPack lrp;
-			pack >> num;
-			switch (static_cast<Protocol>(num))
-			{
-			case HELLO:
-				std::cout << "HELLO received" << std::endl;
-				NewPlayer(ip, port, pack);
-				break;
-			case ACK:
-				std::cout << "ACK received" << std::endl;
-				pack >> auxIDPack;
-				criticPackets.erase(criticPackets.find(auxIDPack));
-				break;
-			case PONG:
-				//std::cout << "PONG received" << std::endl;
-				int pId;
-				pack >> pId;
-				clientProxies[pId]->numPings = 0;
-				break;
-			case MOVE:
-				//std::cout << "MOVE received" << std::endl;
-				AccumMovement(pack);
-				break;
-			case REGISTER:
-				std::cout << "Petición de registro recibida." << std::endl;
-				pack >> auxIDPack;
-				//Mandar ACK de vuelta
-				
-				packS.clear();
-				packS << static_cast<int>(Protocol::ACK);
-				packS << auxIDPack;
-				sock.send(packS, ip, port);
-
-				//Añadir pack a la queue
-				lrp.ip = ip;
-				lrp.port = port;
-				lrp.pack = pack;
-
-				registerQueue.push(lrp);
-
-				//AnswerRegister(ip, port, pack);
-				break;
-			case LOGIN:
-				std::cout << "Petición de login recibida." << std::endl;
-				pack >> auxIDPack;
-				//Mandar ACK de vuelta
-
-				packS.clear();
-				packS << static_cast<int>(Protocol::ACK);
-				packS << auxIDPack;
-				sock.send(packS, ip, port);
-
-				//Añadir pack a la queue
-				lrp.ip = ip;
-				lrp.port = port;
-				lrp.pack = pack;
-
-				loginQueue.push(lrp);
-				
-				//AnswerLogin(ip, port, pack);
-				break;
-			case FINDGAME:
-				pack >> auxIDPack;
-				pack >> auxIDPlayer;
-				std::cout << "Petición de buscar partida recibida del usuario con id: " << auxIDPlayer << std::endl;
-
-				//Mandar ACK de vuelta
-				packS.clear();
-				packS << static_cast<int>(Protocol::ACK);
-				packS << auxIDPack;
-				sock.send(packS, ip, port);
-
-				pack >> num;
-
-				//Asignar el color del player
-				clientProxies[auxIDPlayer]->SetPlayerColor(static_cast<SkinColors>(num));
-
-				//Añadir el player a la matchmaking pool
-				clientsSearchingForGame.push_back(auxIDPlayer);
-
-				break;
-			}
-		}
 		else
 		{
-			std::cout << "Packet lost (on purpose)" << std::endl;
+			if (RandomPacketLost())
+			{
+				//std::cout << "Reading package" << std::endl;
+				int num;
+				int auxIDPack, auxIDPlayer;
+				sf::Packet packS;
+				LoginRegisterPack lrp;
+				pack >> num;
+				switch (static_cast<Protocol>(num))
+				{
+				case HELLO:
+					std::cout << "HELLO received" << std::endl;
+					NewPlayer(ip, port, pack);
+					break;
+				case ACK:
+					std::cout << "ACK received" << std::endl;
+					pack >> auxIDPack;
+					criticPackets.erase(criticPackets.find(auxIDPack));
+					break;
+				case PONG:
+					//std::cout << "PONG received" << std::endl;
+					int pId;
+					pack >> pId;
+					clientProxies[pId]->numPings = 0;
+					break;
+				case MOVE:
+					//std::cout << "MOVE received" << std::endl;
+					AccumMovement(pack);
+					break;
+				case REGISTER:
+					std::cout << "Petición de registro recibida." << std::endl;
+					pack >> auxIDPack;
+					//Mandar ACK de vuelta
+
+					packS.clear();
+					packS << static_cast<int>(Protocol::ACK);
+					packS << auxIDPack;
+					sock.send(packS, ip, port);
+
+					//Añadir pack a la queue
+					lrp.ip = ip;
+					lrp.port = port;
+					lrp.pack = pack;
+
+					registerQueue.push(lrp);
+
+					//AnswerRegister(ip, port, pack);
+					break;
+				case LOGIN:
+					std::cout << "Petición de login recibida." << std::endl;
+					pack >> auxIDPack;
+					//Mandar ACK de vuelta
+
+					packS.clear();
+					packS << static_cast<int>(Protocol::ACK);
+					packS << auxIDPack;
+					sock.send(packS, ip, port);
+
+					//Añadir pack a la queue
+					lrp.ip = ip;
+					lrp.port = port;
+					lrp.pack = pack;
+
+					loginQueue.push(lrp);
+
+					//AnswerLogin(ip, port, pack);
+					break;
+				case FINDGAME:
+					pack >> auxIDPack;
+					pack >> auxIDPlayer;
+					std::cout << "Petición de buscar partida recibida del usuario con id: " << auxIDPlayer << std::endl;
+
+					//Mandar ACK de vuelta
+					packS.clear();
+					packS << static_cast<int>(Protocol::ACK);
+					packS << auxIDPack;
+					sock.send(packS, ip, port);
+
+					pack >> num;
+
+					//Asignar el color del player
+					clientProxies[auxIDPlayer]->SetPlayerColor(static_cast<SkinColors>(num));
+
+					//Añadir el player a la matchmaking pool
+					clientsSearchingForGame.push_back(auxIDPlayer);
+
+					break;
+				}
+			}
+			else
+			{
+				std::cout << "Packet lost (on purpose)" << std::endl;
+			}
 		}
 	}
 

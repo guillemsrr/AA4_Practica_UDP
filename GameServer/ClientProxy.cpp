@@ -62,7 +62,7 @@ void ClientProxy::EatBall()
 {
 	if (currentFood == foodToGrow - 1)
 	{
-		CreateBodyPosition();
+		CreateBodyPosition(false, sf::Vector2f(0.0f, 0.0f));
 	}
 	currentFood = (currentFood + 1) % foodToGrow;
 }

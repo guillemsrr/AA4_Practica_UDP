@@ -119,7 +119,9 @@ int main()
 				case WELCOME:
 				{
 					//Crear jugador propio
+					mtx_bodies.lock();
 					m_player = new Player(&pack);
+					mtx_bodies.unlock();
 					playersMap[m_player->appId] = m_player;
 
 					std::cout << "WELCOME player "<< m_player->appId << std::endl;
@@ -139,7 +141,9 @@ int main()
 					break;
 				case NEW_PLAYER:
 				{
+					mtx_bodies.lock();
 					Player* p = new Player(&pack);
+					mtx_bodies.unlock();
 					playersMap[p->appId] = p;
 					board.InitializeSlither(p);
 
@@ -205,8 +209,10 @@ int main()
 								//std::cout << "Position modified!" << std::endl;
 								//std::cout << "movesMap y: "<< (float)movesMap[idMove].y << " head pos y " << (float)headPos.y << std::endl;
 
+								mtx_bodies.lock();
 								m_player->UpdateTheRestOfPositions(numPos, headPos, &pack);
 								board.UpdateSlither(idPlayer);
+								mtx_bodies.unlock();
 
 								accumMove = sf::Vector2f(0.0f, 0.0f);
 								/*bool x = (float)movesMap[idMove].x != (float)headPos.x;
@@ -218,11 +224,14 @@ int main()
 							}
 							else if (numPos > (int)m_player->bodyPositions.size())
 							{
+								mtx_bodies.lock();
 								while (numPos > (int)m_player->bodyPositions.size())
 								{
-									m_player->CreateBodyPosition();
+									m_player->CreateBodyPosition(false, sf::Vector2f(0.0f, 0.0f));
 								}
+
 								board.UpdateSlither(idPlayer);
+								mtx_bodies.unlock();
 							}
 							else
 							{
@@ -252,7 +261,9 @@ int main()
 					{
 						//just save the final position to interpolate!
 						//std::cout << "saved move to interpolation" << std::endl;
+						mtx_bodies.lock();
 						interpolationsMap[idPlayer] = playersMap[idPlayer]->GetFuturePositions(&pack);
+						mtx_bodies.unlock();
 					}
 				}
 					break;
@@ -315,13 +326,16 @@ int main()
 				}
 					break;
 				case REGISTER:
+				{
 					pack >> codigoRegistro;
 
 					std::cout << "Recibo confirmacion del registro con codigo: " << codigoRegistro << std::endl;
 
 					registerResponse = true;
+				}
 					break;
 				case LOGIN:
+				{
 					pack >> codigoLogin;
 
 					if (codigoLogin == 1)
@@ -338,8 +352,8 @@ int main()
 						std::cout << "Error al iniciar sesion: " << codigoLogin << std::endl;
 
 					}
-					
-					
+
+				}
 					break;
 				case ACK:
 					pack >> auxID;
@@ -354,7 +368,9 @@ int main()
 
 					for (int i = 0; i < size; i++)
 					{
+						mtx_bodies.lock();
 						Player* p = new Player(&pack);
+						mtx_bodies.unlock();
 						if (m_player->appId == p->appId)
 						{
 							//Sustituir datos de ownPlayer
@@ -885,8 +901,10 @@ void GraphicsInterface()
 				////prediction movement:
 				if (abs(board.playerMovement.x) + abs(board.playerMovement.y) > 0)
 				{
+					mtx_bodies.lock();
 					m_player->UpdatePosition(board.playerMovement);
 					board.UpdateSlither(m_player->appId);
+					mtx_bodies.unlock();
 				}
 			}			
 		}
@@ -910,6 +928,7 @@ void MoveSending()
 				pack.clear();
 				pack << static_cast<int>(Protocol::MOVE);
 				pack << m_player->appId;
+				std::cout << "APPid on move: " << m_player->appId << std::endl;
 				pack << actualMoveID;
 
 				movesMap[actualMoveID] = m_player->bodyPositions[0];
@@ -962,7 +981,9 @@ void InterpolatePositions()
 					toErase.push_back(it);
 				}
 
+				mtx_bodies.lock();
 				board.UpdateSlither(it->first);
+				mtx_bodies.unlock();
 
 				//std::cout << "interpolating" << std::endl;
 			}

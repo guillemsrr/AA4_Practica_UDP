@@ -3,6 +3,7 @@
 #include <Food.h>
 #include "ClientProxy.h"
 #include <Constants.h>
+#include <mutex>
 
 class GameProxy
 {
@@ -16,7 +17,8 @@ public:
 	std::vector<Food*> foodVector;
 	const int maxFood = 100;
 
-
+	std::mutex mtx_body;
+	std::mutex mtx_food;
 	void InitializeFood();
 	void FoodCollisionCheck(std::map<int, ClientProxy*> &clientProxies, int pID, std::vector<sf::Vector2f> playerPositions, float playerBodyRadius);
 	float Distance(sf::Vector2f v1, sf::Vector2f v2);

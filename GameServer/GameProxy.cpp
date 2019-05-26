@@ -20,6 +20,7 @@ GameProxy::~GameProxy()
 
 void GameProxy::InitializeFood()
 {
+	std::lock_guard<std::mutex> guard(mtx_food);
 	for (int i = 0; i < maxFood; i++)
 	{
 		sf::Vector2f pos;
@@ -31,11 +32,13 @@ void GameProxy::InitializeFood()
 
 void GameProxy::FoodCollisionCheck(std::map<int, ClientProxy*> &clientProxies, int pID, std::vector<sf::Vector2f> playerPositions, float playerBodyRadius)
 {
+	std::lock_guard<std::mutex> guard(mtx_food);
 	int i = 0;
 	//std::cout << "Food vector size: " << (int)foodVector.size() << std::endl;
 	while (i < (int)foodVector.size() - 1)
 	{
 		bool collided = false;
+		mtx_body.lock();
 		for (int j = 0; j < (int)playerPositions.size(); j++)
 		{
 			if (Distance(foodVector[i]->position, playerPositions[j]) < playerBodyRadius)
@@ -44,6 +47,7 @@ void GameProxy::FoodCollisionCheck(std::map<int, ClientProxy*> &clientProxies, i
 				break;
 			}
 		}
+		mtx_body.unlock();
 		if (/*Collision*/collided)
 		{
 			//Food eaten
@@ -88,9 +92,11 @@ void GameProxy::MovementControl(sf::UdpSocket &sock, std::map<int, ClientProxy*>
 	pack << idPlayer;
 	pack << idMove;
 
+	mtx_body.lock();
 	clientProxies[idPlayer]->PutBodyPositions(&pack);
 
 	std::cout << "body positions: " << (int)clientProxies[idPlayer]->bodyPositions.size() << std::endl;
+	mtx_body.unlock();
 
 	for (int i=0; i<idPlayersInGame.size(); i++)
 	{
@@ -109,30 +115,39 @@ void GameProxy::PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientPr
 	{
 		if (idPlayersInGame[i] != idPlayer && !clientProxies[idPlayersInGame[i]]->dead)
 		{
-			for (int i = 0; i < (int)clientProxies[idPlayersInGame[i]]->bodyPositions.size(); i++)
+			mtx_body.lock();
+			for (int j = 0; j < (int)clientProxies[idPlayersInGame[i]]->bodyPositions.size(); j++)
 			{
-				if (Distance(clientProxies[idPlayer]->bodyPositions[0], clientProxies[idPlayersInGame[i]]->bodyPositions[i]) < 13.f)
+				if (Distance(clientProxies[idPlayer]->bodyPositions[0], clientProxies[idPlayersInGame[i]]->bodyPositions[j]) < 13.f)
 				{
 					std::cout << "collisioned" << std::endl;
 					kill = true;
+					//std::cout << "ID al morir: " << idPlayersInGame[i] << ", " << "ID player: " << idPlayer << std::endl;
 					break;
 				}
 			}
+			mtx_body.unlock();
 		}
 	}
 
 	if (kill)
 	{
 		//spawn balls
+		mtx_body.lock();
 		for (int i = 0; i < (int)clientProxies[idPlayer]->bodyPositions.size(); i++)
 		{
 			Food* food = new Food(clientProxies[idPlayer]->bodyPositions[i]);
+			mtx_food.lock();
 			foodVector.push_back(food);
+			mtx_food.unlock();
 		}
+		mtx_body.unlock();
 
 		sf::Packet pack;
 		pack << Protocol::KILL;
 		pack << idPlayer;
+
+		int aux = -1;
 
 		for (int i = 0; i < idPlayersInGame.size(); i++)
 		{
@@ -140,9 +155,12 @@ void GameProxy::PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientPr
 			{
 				//error
 			}
+			if (idPlayersInGame[i] == idPlayer)
+				aux = i;
 		}
 
-		//clientProxies.erase(idPlayer);
+
+		idPlayersInGame.erase(idPlayersInGame.begin() +aux);
 		clientProxies[idPlayer]->dead = true;
 	}
 }

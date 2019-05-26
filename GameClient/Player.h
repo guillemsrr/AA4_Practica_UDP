@@ -1,5 +1,6 @@
 #pragma once
 #include <PlayerInfo.h>
+#include <mutex>
 
 class Player :
 	public PlayerInfo
@@ -12,7 +13,7 @@ public:
 	float speed;
 
 	void AddBodyPositions(sf::Packet* pack);
-	void UpdatePosition(sf::Packet* pack);
+	//void UpdatePosition(sf::Packet* pack);
 	std::vector<sf::Vector2f> GetFuturePositions(sf::Packet* pack);
 	void UpdatePosition(sf::Vector2f headPos);
 	void UpdateTheRestOfPositions(int numPos, sf::Vector2f headPos, sf::Packet* pack);

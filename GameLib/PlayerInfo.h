@@ -39,7 +39,7 @@ public:
 	float Distance(sf::Vector2f v1, sf::Vector2f v2);
 	void Normalize(sf::Vector2f& vec);
 	void SetPlayerColor(SkinColors _skinColor);
-	void CreateBodyPosition();
+	void CreateBodyPosition(bool overridePos, sf::Vector2f position);
 	const float separation = 10.0f;
 
 	int currentFood;

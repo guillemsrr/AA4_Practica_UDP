@@ -87,15 +87,18 @@ void PlayerInfo::SetPlayerColor(SkinColors _skinColor)
 	}
 }
 
-void PlayerInfo::CreateBodyPosition()
+void PlayerInfo::CreateBodyPosition(bool overridePos, sf::Vector2f position)
 {
-	//std::cout << "create before" << std::endl;
+	if (!overridePos)
+	{
+		sf::Vector2f dir = bodyPositions[bodyPositions.size() - 1] - bodyPositions[bodyPositions.size() - 2];
+		Normalize(dir);
 
-	sf::Vector2f dir = bodyPositions[bodyPositions.size()-1] - bodyPositions[bodyPositions.size()-2];
-	Normalize(dir);
-
-	sf::Vector2f pos = bodyPositions[bodyPositions.size() - 1] + dir * separation;
-	bodyPositions.push_back(pos);
-	//std::cout << "create after" << std::endl;
-
+		sf::Vector2f pos = bodyPositions[bodyPositions.size() - 1] + dir * separation;
+		bodyPositions.push_back(pos);
+	}
+	else
+	{
+		bodyPositions.push_back(position);
+	}
 }

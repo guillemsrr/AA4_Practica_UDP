@@ -1,4 +1,9 @@
 #include "GameProxy.h"
+#include <jdbc/mysql_connection.h>
+#include <jdbc/mysql_driver.h>
+#include <jdbc/cppconn/statement.h>
+#include <jdbc/cppconn/resultset.h>
+#include <jdbc/cppconn/prepared_statement.h>
 
 
 
@@ -123,6 +128,7 @@ void GameProxy::PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientPr
 				{
 					std::cout << "collisioned" << std::endl;
 					kill = true;
+					clientProxies[idPlayersInGame[i]]->totalKills += 1;
 					//std::cout << "ID al morir: " << idPlayersInGame[i] << ", " << "ID player: " << idPlayer << std::endl;
 					clientProxies[idPlayer]->uState = UserState::LOBBY;
 					break;
@@ -149,6 +155,9 @@ void GameProxy::PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientPr
 		pack << Protocol::KILL;
 		pack << idPlayer;
 
+		clientProxies[idPlayer]->maxLongitud = clientProxies[idPlayer]->bodyPositions.size();
+		std::cout << "LONGITUD DEL PERDEDOR: " << clientProxies[idPlayer]->bodyPositions.size() << std::endl;
+
 		int aux = -1;
 
 		for (int i = 0; i < idPlayersInGame.size(); i++)
@@ -160,16 +169,65 @@ void GameProxy::PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientPr
 			if (idPlayersInGame[i] == idPlayer)
 				aux = i;
 		}
-
+		UpdateGameBBDD(idPlayer, clientProxies[idPlayer]->queryId, clientProxies[idPlayer]->totalKills, clientProxies[idPlayer]->maxLongitud, false);
 		idPlayersInGame.erase(idPlayersInGame.begin() +aux);
+		querysIDGame.erase(querysIDGame.begin() + aux);
 		clientProxies[idPlayer]->dead = true;
+		
+
 
 		if (idPlayersInGame.size() == 1)
 		{
 			sf::Packet pack2;
 			pack2 << Protocol::WIN;
+			clientProxies[idPlayersInGame[0]]->maxLongitud = clientProxies[idPlayersInGame[0]]->bodyPositions.size();
 			clientProxies[idPlayersInGame[0]]->uState = UserState::LOBBY;
 			sock.send(pack2, clientProxies[idPlayersInGame[0]]->ip, clientProxies[idPlayersInGame[0]]->port);
+			UpdateGameBBDD(idPlayersInGame[0], clientProxies[idPlayersInGame[0]]->queryId, clientProxies[idPlayersInGame[0]]->totalKills, clientProxies[idPlayersInGame[0]]->maxLongitud, true);
+
+			idPlayersInGame.clear();
+			querysIDGame.clear();
 		}
 	}
+}
+
+void GameProxy::UpdateGameBBDD(int idPlayer, int queryId, int kills, int longitud, bool ganador)
+{
+	std::cout << "idplayer = " << idPlayer << ", kills = " << kills << ", longitud = " << longitud << ", ganador = " << ganador << std::endl;
+
+	sql::Driver* driver = sql::mysql::get_driver_instance();
+	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+	conn->setSchema("slitherudp");
+
+	sql::PreparedStatement* pstmt;
+	sql::ResultSet* res;
+
+	for (int j = 0; j <idPlayersInGame.size(); j++)
+	{
+		if (idPlayersInGame[j] == idPlayer)
+		{
+			if (ganador)
+			{
+				pstmt = conn->prepareStatement("UPDATE Partidas SET Kills=?, MaxLongitud=?, idGanador=? WHERE id=?");
+				pstmt->setInt(1, kills);
+				pstmt->setInt(2, longitud);
+				pstmt->setInt(3, queryId);
+				pstmt->setInt(4, querysIDGame[j]);
+				pstmt->executeUpdate();
+			}
+			else
+			{
+				std::cout << "idplayer = " << idPlayer << ", kills = " << kills << ", longitud = " << longitud << ", ganador = " << ganador << ", idGame = " << querysIDGame[j] << std::endl;
+
+				pstmt = conn->prepareStatement("UPDATE Partidas SET Kills=?, MaxLongitud=? WHERE id=?");
+				pstmt->setInt(1, kills);
+				pstmt->setInt(2, longitud);
+				pstmt->setInt(3, querysIDGame[j]);
+				pstmt->executeUpdate();
+			}
+
+		}
+	}
+
+	conn->close();
 }

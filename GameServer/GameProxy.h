@@ -26,6 +26,7 @@ public:
 	float Distance(sf::Vector2f v1, sf::Vector2f v2);
 	void MovementControl(sf::UdpSocket &sock, std::map<int, ClientProxy*> &clientProxies, int idPlayer, int idMove);
 	void PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientProxy*> &clientProxies, int idPlayer);
+	void UpdateGameBBDD(int idPlayer, int queryId, int kills, int longitud, bool ganador);
 
 };
 

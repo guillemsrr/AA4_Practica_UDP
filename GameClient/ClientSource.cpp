@@ -338,6 +338,7 @@ int main()
 					std::cout << "Recibo confirmacion del registro con codigo: " << codigoRegistro << std::endl;
 
 					registerResponse = true;
+					loginOrRegister = true;
 				}
 					break;
 				case LOGIN:
@@ -355,6 +356,7 @@ int main()
 					else
 					{
 						loginResponse = true;
+						loginOrRegister = true;
 						std::cout << "Error al iniciar sesion: " << codigoLogin << std::endl;
 
 					}

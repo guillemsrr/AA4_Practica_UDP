@@ -20,6 +20,8 @@ public:
 	UserState uState;
 	float mmr;
 	int idSesionActual;
+	int totalKills;
+	int maxLongitud;
 
 	sf::Vector2f accumMovement;
 

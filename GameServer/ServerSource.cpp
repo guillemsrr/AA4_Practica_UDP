@@ -48,9 +48,9 @@ void MovementControlThread();
 //other:
 void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack);
-void SetPlayerSesion(int idPlayer);
+void SetPlayerSesion(int appIdPlayer, int idPlayer);
 void CreateGameBBDD(int idGame);
-void UpdateGameBBDD(int idGame, int idPlayer, int kills, int longitud, bool ganador);
+//void UpdateGameBBDD(int idGame, int idPlayer, int kills, int longitud, bool ganador);
 void UpdateSesion(int idPlayer);
 void GetPlayeBBDDInfo(int idPlayer);
 void UpdatePlayerBBDDInfo(int idPlayer);
@@ -233,9 +233,7 @@ void PingThreadFunction()
 	sf::Packet packFood;
 	while (true)
 	{
-		//sf::Time t1 = clock.getElapsedTime();
-		//if (t1.asSeconds() > PINGTIMER)
-		//{
+
 			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 			{
 				if (it->second->uState == UserState::PLAY)
@@ -252,44 +250,53 @@ void PingThreadFunction()
 			}
 
 			//ERE LAYS THE CULPRIT
-			for (int j = 0; j < games.size(); j++)
+			//for (int j = 0; j < games.size(); j++)
+			int j = 0;
+			while(j<games.size())
 			{
-				for (int z=0; z<games[j]->idPlayersInGame.size(); z++)
+				if (games[j]->idPlayersInGame.size() == 0)
 				{
-					packFood << static_cast<int>(Protocol::FOOD_UPDATE);
-
-					//tota la info del menjar:
-					//només els que té més aprop
-					std::vector<Food*> closeFood;
-
-					for (int i = 0; i < (int)games[j]->foodVector.size(); i++)
+					//Borrar la partida
+					games.erase(games.begin() + j);
+				}
+				else
+				{
+					for (int z = 0; z < games[j]->idPlayersInGame.size(); z++)
 					{
-						if (Distance(clientProxies[games[j]->idPlayersInGame[z]]->bodyPositions[0], games[j]->foodVector[i]->position) < minFoodDist)
+						packFood << static_cast<int>(Protocol::FOOD_UPDATE);
+
+						//tota la info del menjar:
+						//només els que té més aprop
+						std::vector<Food*> closeFood;
+
+						for (int i = 0; i < (int)games[j]->foodVector.size(); i++)
 						{
-							closeFood.push_back(games[j]->foodVector[i]);
+							if (Distance(clientProxies[games[j]->idPlayersInGame[z]]->bodyPositions[0], games[j]->foodVector[i]->position) < minFoodDist)
+							{
+								closeFood.push_back(games[j]->foodVector[i]);
+							}
 						}
-					}
-					//num foods:
-					packFood << static_cast<int>(closeFood.size());
-					for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
-					{
-						Food* food = *closeit;
-						//pack << food->id;
-						packFood << food->position.x;
-						packFood << food->position.y;
-						//pack << food->color; //no puc passar el color?
+						//num foods:
+						packFood << static_cast<int>(closeFood.size());
+						for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
+						{
+							Food* food = *closeit;
+							//pack << food->id;
+							packFood << food->position.x;
+							packFood << food->position.y;
+							//pack << food->color; //no puc passar el color?
+						}
+
+						sock.send(packFood, clientProxies[games[j]->idPlayersInGame[z]]->ip, clientProxies[games[j]->idPlayersInGame[z]]->port);
+						packFood.clear();
 					}
 
-					sock.send(packFood, clientProxies[games[j]->idPlayersInGame[z]]->ip, clientProxies[games[j]->idPlayersInGame[z]]->port);
-					packFood.clear();
+					j++;
 				}
 			}
 
-			//std::cout << "THREADS: PING going to sleep for " << PINGTIMER * 1000 << " Milliseconds." << std::endl;
 			std::this_thread::sleep_for(std::chrono::milliseconds((int)(PINGTIMER * 1000)));
-			//std::cout << "THREADS: PING awakened " << std::endl;
-			//clock.restart();
-		//}
+
 	}
 }
 
@@ -380,13 +387,9 @@ void CriticPacketsManagerThreadFunction()
 
 void MovementControlThread()
 {
-	//sf::Clock clock;
 
 	while (true)
 	{
-		//sf::Time t1 = clock.getElapsedTime();
-		//if (t1.asSeconds() > MOVEMENTUPDATETIMER)
-		//{
 		for (int i = 0; i < games.size(); i++)
 		{
 			for (int j=0; j<games[i]->idPlayersInGame.size(); j++)
@@ -398,12 +401,8 @@ void MovementControlThread()
 			}
 		}
 			
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(MOVEMENTUPDATETIMER * 1000)));
 
-			//std::cout << "THREADS: MOVEMENT going to sleep for " << MOVEMENTUPDATETIMER * 1000 << " Milliseconds." << std::endl;
-			std::this_thread::sleep_for(std::chrono::milliseconds((int)(MOVEMENTUPDATETIMER * 1000)));
-			//std::cout << "THREADS: MOVEMENT awakened" << std::endl;
-			//clock.restart();
-		//}
 	}
 }
 
@@ -581,7 +580,7 @@ void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 					it->second->queryId = idUser;
 					it->second->uState = UserState::LOBBY;
 					it->second->isLogged = true;
-					SetPlayerSesion(idUser);
+					SetPlayerSesion(it->second->appId, idUser);
 
 					GetPlayeBBDDInfo(idUser);
 				}
@@ -615,7 +614,7 @@ void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 
 }
 
-void SetPlayerSesion(int idPlayer)
+void SetPlayerSesion(int appIdPlayer, int idPlayer)
 {
 	sql::Driver* driver = sql::mysql::get_driver_instance();
 	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
@@ -649,9 +648,10 @@ void SetPlayerSesion(int idPlayer)
 
 	} while (pstmt->getMoreResults());
 
+
 	BubbleSort2(sesionesUser);
 	std::cout << "Ultima sesion del usuario tiene id: " << sesionesUser[sesionesUser.size() - 1] << std::endl;
-	clientProxies[idPlayer]->idSesionActual = sesionesUser[sesionesUser.size() - 1];
+	clientProxies[appIdPlayer]->idSesionActual = sesionesUser[sesionesUser.size() - 1];	
 
 	conn->close();
 
@@ -672,21 +672,20 @@ void CreateGameBBDD(int idGame)
 		{
 			for (int j = 0; j < games[i]->idPlayersInGame.size(); j++)
 			{
-				//Insertar un nuevo registro de partida con esa idSesion y ese idUsuario
-				pstmt = conn->prepareStatement("INSERT INTO Partidas(idUsuario, idSesion, Kills, MaxLongitud, Inicio, Final, idGanador) VALUES(?, ?, ?, ?, CURRENT_TIME(), CURRENT_TIME(), ?)");
+				pstmt = conn->prepareStatement("INSERT INTO Partidas(idUsuario, idSesion, Kills, MaxLongitud, Inicio, Final) VALUES(?, ?, ?, ?, CURRENT_TIME(), CURRENT_TIME())");
 				pstmt->setInt(1, clientProxies[games[i]->idPlayersInGame[j]]->queryId);
 				pstmt->setInt(2, clientProxies[games[i]->idPlayersInGame[j]]->idSesionActual);
 				pstmt->setInt(3, 0);
 				pstmt->setInt(4, 0);
-				pstmt->setInt(5, 0);
 				pstmt->executeUpdate();
 
-				//Guardar en la clase GaeProxy el queryIdGame
+
+				//Guardar el id de las partidas en el vector de gameproxy
 				pstmt = conn->prepareStatement("SELECT id FROM Partidas WHERE idUsuario=?");
-				pstmt->setInt(1, games[i]->idPlayersInGame[0]);
+				pstmt->setInt(1, clientProxies[games[i]->idPlayersInGame[j]]->queryId);
 				pstmt->execute();
 
-				std::vector<int> idPartidas;
+				std::vector<int> auxIds;
 
 				do
 				{
@@ -694,56 +693,61 @@ void CreateGameBBDD(int idGame)
 
 					while (res->next())
 					{
-						idPartidas.push_back(res->getInt(1));
+						auxIds.push_back(res->getInt(1));
 						//std::cout << "Resultado de consultar el la cantidad de partidas ganadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
 					}
 
 				} while (pstmt->getMoreResults());
 
-				BubbleSort2(idPartidas);
-				std::cout << "Ultima partida del usuario numero 0 tiene id: " << idPartidas[idPartidas.size() - 1] << std::endl;
-				//games[i]->queryIDGame = idPartidas[idPartidas.size() - 1];
-				games[i]->querysIDGame.push_back(idPartidas[idPartidas.size() - 1]);
-			}
-		}
-
-		
-
-	}
-
-	conn->close();
-}
-
-void UpdateGameBBDD(int idGame, int idPlayer, int kills, int longitud, bool ganador)
-{
-
-	sql::Driver* driver = sql::mysql::get_driver_instance();
-	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
-	conn->setSchema("slitherudp");
-
-	sql::PreparedStatement* pstmt;
-	sql::ResultSet* res;
+				BubbleSort2(auxIds);
+				std::cout << "Ultima partida del usuario tiene id: " << auxIds[auxIds.size() - 1] << std::endl;
+				games[i]->querysIDGame.push_back(auxIds[auxIds.size() - 1]);
 
 
-	for (int i = 0; i < games.size(); i++)
-	{
-		if (games[i]->id == idGame)
-		{
-			for (int j = 0; j < games[i]->idPlayersInGame.size(); j++)
-			{
-				if (games[i]->idPlayersInGame[j] == idPlayer)
-				{
-					pstmt = conn->prepareStatement("UPDATE Partidas SET Kills=?, MaxLongitud=? WHERE id=?");
-					pstmt->setInt(1, );
-					pstmt->setInt(2, );
-					pstmt->setInt(3, games[i]->querysIDGame[j]);
-				}
 			}
 		}
 	}
-
-	conn->close();
+	
 }
+
+//void UpdateGameBBDD(int idGame, int idPlayer, int kills, int longitud, bool ganador)
+//{
+//
+//	sql::Driver* driver = sql::mysql::get_driver_instance();
+//	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+//	conn->setSchema("slitherudp");
+//
+//	sql::PreparedStatement* pstmt;
+//	sql::ResultSet* res;
+//
+//
+//	for (int i = 0; i < games.size(); i++)
+//	{
+//		if (games[i]->id == idGame)
+//		{
+//			for (int j = 0; j < games[i]->idPlayersInGame.size(); j++)
+//			{
+//				if (games[i]->idPlayersInGame[j] == idPlayer)
+//				{
+//					if (ganador)
+//					{
+//						pstmt = conn->prepareStatement("UPDATE Partidas SET Kills=?, MaxLongitud=? WHERE id=?");
+//						/*pstmt->setInt(1, );
+//						pstmt->setInt(2, );
+//						pstmt->setInt(3, games[i]->querysIDGame[j]);*/
+//					}
+//					else
+//					{
+//
+//					}
+//					
+//				}
+//			}
+//		}
+//	}
+//
+//	conn->close();
+//}
 
 void UpdateSesion(int idPlayer)
 {
@@ -1112,6 +1116,38 @@ void BubbleSort2(std::vector<int> &arr)
 
 void CreateGame(std::vector<int> &arr)
 {
+	//Resetear player info
+	for (int i = 0; i < arr.size(); i++)
+	{
+		//Auxs
+		int auxAppId;
+		int auxQueryId;
+		int auxSesionActualId;
+		sf::IpAddress auxIp;
+		unsigned short auxPort;
+		SkinColors auxSkin;
+
+		//Reset
+		auxAppId = clientProxies[arr[i]]->appId;
+		auxQueryId = clientProxies[arr[i]]->queryId;
+		auxSesionActualId = clientProxies[arr[i]]->idSesionActual;
+		auxIp = clientProxies[arr[i]]->ip;
+		auxPort = clientProxies[arr[i]]->port;
+		float x = rand() % SCREEN_WIDTH;
+		float y = rand() % SCREEN_HEIGHT;
+		sf::Vector2f headPos(x, y);
+		auxSkin = clientProxies[arr[i]]->skinColor;
+
+		delete clientProxies[arr[i]];
+		clientProxies[arr[i]] = new ClientProxy(auxAppId, "Default Ailas", auxIp, auxPort, headPos);
+		clientProxies[arr[i]]->queryId = auxQueryId;
+		clientProxies[arr[i]]->idSesionActual = auxSesionActualId;
+		clientProxies[arr[i]]->isLogged = true;
+		clientProxies[arr[i]]->SetPlayerColor(auxSkin);
+
+
+	}
+
 	//Pasar datos de todos los jugadores de la partida a todos los jugadores
 	sf::Packet pack;
 	pack << static_cast<int>(Protocol::STARTGAME);
@@ -1128,6 +1164,8 @@ void CreateGame(std::vector<int> &arr)
 		sock.send(pack, clientProxies[arr[i]]->ip, clientProxies[arr[i]]->port);
 	}
 
+	
 	games.push_back(new GameProxy(games.size(), arr));
+	CreateGameBBDD(games.size()-1);
 
 }

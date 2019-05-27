@@ -15,6 +15,8 @@ ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigne
 	uState = UserState::NOTLOGGEDIN;
 	mmr = 0;
 	idSesionActual = 0;
+	totalKills = 0;
+	maxLongitud = 0;
 }
 
 ClientProxy::~ClientProxy()

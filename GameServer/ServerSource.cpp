@@ -22,10 +22,12 @@
 typedef struct {
 	sf::IpAddress ip;
 	unsigned short port;
+	int appID;
 	sf::Packet pack;
 }LoginRegisterPack;
 
-
+std::mutex clientProxies_mtx;
+std::mutex gameProxies_mtx;
 
 sf::UdpSocket sock;
 const float minFoodDist = 200.f;
@@ -47,14 +49,14 @@ void CriticPacketsManagerThreadFunction();
 void MovementControlThread();
 //other:
 void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack);
-void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack);
+void AnswerLogin(int appID, sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void SetPlayerSesion(int appIdPlayer, int idPlayer);
 void CreateGameBBDD(int idGame);
 //void UpdateGameBBDD(int idGame, int idPlayer, int kills, int longitud, bool ganador);
 void UpdateSesion(int idPlayer);
-void GetPlayeBBDDInfo(int idPlayer);
+void GetPlayeBBDDInfo(int playerAppID, int playerQueryID);
 void UpdatePlayerBBDDInfo(int idPlayer);
-void ComputeMMRFromPlayer(int idPlayer, int partidasGanadas, int partidasJugadas, int totalKills, int partidasNoGanadas);
+void ComputeMMRFromPlayer(int playerAppID, int playerQueryID, int partidasGanadas, int partidasJugadas, int totalKills, int partidasNoGanadas);
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AccumMovement(sf::Packet pack);
 bool RandomPacketLost();
@@ -174,6 +176,7 @@ int main()
 					break;
 				case LOGIN:
 					std::cout << "Petición de login recibida." << std::endl;
+					pack >> auxIDPlayer;
 					pack >> auxIDPack;
 					//Mandar ACK de vuelta
 
@@ -186,6 +189,7 @@ int main()
 					lrp.ip = ip;
 					lrp.port = port;
 					lrp.pack = pack;
+					lrp.appID = auxIDPlayer;
 
 					loginQueue.push(lrp);
 
@@ -202,9 +206,10 @@ int main()
 					packS << auxIDPack;
 					sock.send(packS, ip, port);
 
-					pack >> num;
+					
 
 					//Asignar el color del player
+					pack >> num;
 					clientProxies[auxIDPlayer]->SetPlayerColor(static_cast<SkinColors>(num));
 
 					//Añadir el player a la matchmaking pool
@@ -233,70 +238,69 @@ void PingThreadFunction()
 	sf::Packet packFood;
 	while (true)
 	{
-
-			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+		clientProxies_mtx.lock();
+		for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+		{
+			if (it->second->uState == UserState::PLAY)
 			{
-				if (it->second->uState == UserState::PLAY)
+				if (sock.send(packPing, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
 				{
-					if (sock.send(packPing, it->second->ip, it->second->port) != sf::UdpSocket::Status::Done)
-					{
-						std::cout << "Error sending PING to client with id: " << it->second->appId << "and ip: " << it->second->ip.toString() << std::endl;
-					}
-					else
-					{
-						it->second->numPings++;
-					}
-				}
-			}
-
-			//ERE LAYS THE CULPRIT
-			//for (int j = 0; j < games.size(); j++)
-			int j = 0;
-			while(j<games.size())
-			{
-				if (games[j]->idPlayersInGame.size() == 0)
-				{
-					//Borrar la partida
-					games.erase(games.begin() + j);
+					std::cout << "Error sending PING to client with id: " << it->second->appId << "and ip: " << it->second->ip.toString() << std::endl;
 				}
 				else
 				{
-					for (int z = 0; z < games[j]->idPlayersInGame.size(); z++)
-					{
-						packFood << static_cast<int>(Protocol::FOOD_UPDATE);
-
-						//tota la info del menjar:
-						//només els que té més aprop
-						std::vector<Food*> closeFood;
-
-						for (int i = 0; i < (int)games[j]->foodVector.size(); i++)
-						{
-							if (Distance(clientProxies[games[j]->idPlayersInGame[z]]->bodyPositions[0], games[j]->foodVector[i]->position) < minFoodDist)
-							{
-								closeFood.push_back(games[j]->foodVector[i]);
-							}
-						}
-						//num foods:
-						packFood << static_cast<int>(closeFood.size());
-						for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
-						{
-							Food* food = *closeit;
-							//pack << food->id;
-							packFood << food->position.x;
-							packFood << food->position.y;
-							//pack << food->color; //no puc passar el color?
-						}
-
-						sock.send(packFood, clientProxies[games[j]->idPlayersInGame[z]]->ip, clientProxies[games[j]->idPlayersInGame[z]]->port);
-						packFood.clear();
-					}
-
-					j++;
+					it->second->numPings++;
 				}
 			}
+		}
+		clientProxies_mtx.unlock();
 
-			std::this_thread::sleep_for(std::chrono::milliseconds((int)(PINGTIMER * 1000)));
+		int j = 0;
+		gameProxies_mtx.lock();
+		while(j<games.size())
+		{
+			if (games[j]->idPlayersInGame.size() == 0)
+			{
+				//Borrar la partida
+				games.erase(games.begin() + j);
+			}
+			else
+			{
+				for (int z = 0; z < games[j]->idPlayersInGame.size(); z++)
+				{
+					packFood << static_cast<int>(Protocol::FOOD_UPDATE);
 
+					//tota la info del menjar:
+					//només els que té més aprop
+					std::vector<Food*> closeFood;
+
+					for (int i = 0; i < (int)games[j]->foodVector.size(); i++)
+					{
+						if (Distance(clientProxies[games[j]->idPlayersInGame[z]]->bodyPositions[0], games[j]->foodVector[i]->position) < minFoodDist)
+						{
+							closeFood.push_back(games[j]->foodVector[i]);
+						}
+					}
+					//num foods:
+					packFood << static_cast<int>(closeFood.size());
+					for (std::vector<Food*>::iterator closeit = closeFood.begin(); closeit != closeFood.end(); ++closeit)
+					{
+						Food* food = *closeit;
+						//pack << food->id;
+						packFood << food->position.x;
+						packFood << food->position.y;
+						//pack << food->color; //no puc passar el color?
+					}
+
+					sock.send(packFood, clientProxies[games[j]->idPlayersInGame[z]]->ip, clientProxies[games[j]->idPlayersInGame[z]]->port);
+					packFood.clear();
+				}
+
+				j++;
+			}
+		}
+		gameProxies_mtx.unlock();
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(PINGTIMER * 1000)));
 	}
 }
 
@@ -312,54 +316,57 @@ void DisconnectionCheckerThreadFunction()
 		//{
 			//std::cout << "Checking for disconnected players" << std::endl;
 			//Comprobar si el numPings supera el límite y enviar el DISCONNECTED a todos los demás clientes
-			for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); /*++it*/)
+		clientProxies_mtx.lock();
+		for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); /*++it*/)
+		{
+			if (it->second->numPings >= MAXUNOPERATIVETIMER)
 			{
-				if (it->second->numPings >= MAXUNOPERATIVETIMER)
+				//Añadir el paquete a la lista de críticos
+				pack << static_cast<int>(Protocol::DISCONNECTED);
+				int idPack = (int)criticPackets.size();
+				pack << idPack;
+				pack << it->second->appId;
+				std::cout << "Desconectar al player con id: " << it->second->appId << std::endl;
+				//Borrar al jugador de la partida en la que esta y hacer ver que ha muerto
+				//for (int i = 0; i < games.size(); i++)
+				//{
+				//	for (int j = 0; j < games[i]->idPlayersInGame.size(); j++)
+				//	{
+				//		if (games[i]->idPlayersInGame[j] == it->second->appId)
+				//		{
+				//			//Hacer ver que este gusano ha muerto y borrarlo de la lista
+				//			games[i]->idPlayersInGame.erase(games[i]->idPlayersInGame.begin() + j);
+				//		}
+				//	}
+				//}
+
+				//Enviar DISCONNECTED
+				if (it->second->matchID != -1)
 				{
-					//Añadir el paquete a la lista de críticos
-					pack << static_cast<int>(Protocol::DISCONNECTED);
-					int idPack = (int)criticPackets.size();
-					pack << idPack;
-					pack << it->second->appId;
-					std::cout << "Desconectar al player con id: " << it->second->appId << std::endl;
-					//Borrar al jugador de la partida en la que esta y hacer ver que ha muerto
-					//for (int i = 0; i < games.size(); i++)
-					//{
-					//	for (int j = 0; j < games[i]->idPlayersInGame.size(); j++)
-					//	{
-					//		if (games[i]->idPlayersInGame[j] == it->second->appId)
-					//		{
-					//			//Hacer ver que este gusano ha muerto y borrarlo de la lista
-					//			games[i]->idPlayersInGame.erase(games[i]->idPlayersInGame.begin() + j);
-					//		}
-					//	}
-					//}
-
-					//Enviar DISCONNECTED
-					for (std::map<int, ClientProxy*>::iterator it2 = clientProxies.begin(); it2 != clientProxies.end(); ++it2)
+					int matchID = it->second->matchID;
+					for (int index = 0; index < games[matchID]->idPlayersInGame.size(); index++)
 					{
-						if (it2 != it)
+						if (games[matchID]->idPlayersInGame[index] != it->second->appId)
 						{
-
-							CriticPack* cp = new CriticPack((int)criticPackets.size(), pack, it2->second->ip, it2->second->port);
+							CriticPack* cp = new CriticPack((int)criticPackets.size(), pack, clientProxies[games[matchID]->idPlayersInGame[index]]->ip, clientProxies[games[matchID]->idPlayersInGame[index]]->port);
 							criticPackets[idPack] = cp;
-
-							sock.send(pack, it2->second->ip, it2->second->port);
 						}
 					}
+				}
 
-					it = clientProxies.erase(it);
-				}
-				else
-				{
-					++it;
-				}
+				it = clientProxies.erase(it);
 			}
+			else
+			{
+				++it;
+			}
+		}
+		clientProxies_mtx.unlock();
 
-			//std::cout << "THREADS: DISCONNECT going to sleep for " << DISCONNECTTIMER * 1000 << " Milliseconds." << std::endl;
-			std::this_thread::sleep_for(std::chrono::milliseconds((int)(DISCONNECTTIMER * 1000)));
-			//std::cout << "THREADS: DISCONNECT awakened" << std::endl;
-			//clock.restart();
+		//std::cout << "THREADS: DISCONNECT going to sleep for " << DISCONNECTTIMER * 1000 << " Milliseconds." << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(DISCONNECTTIMER * 1000)));
+		//std::cout << "THREADS: DISCONNECT awakened" << std::endl;
+		//clock.restart();
 		//}
 	}
 }
@@ -390,6 +397,7 @@ void MovementControlThread()
 
 	while (true)
 	{
+		gameProxies_mtx.lock();
 		for (int i = 0; i < games.size(); i++)
 		{
 			for (int j=0; j<games[i]->idPlayersInGame.size(); j++)
@@ -400,6 +408,7 @@ void MovementControlThread()
 				}
 			}
 		}
+		gameProxies_mtx.unlock();
 			
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)(MOVEMENTUPDATETIMER * 1000)));
 
@@ -520,98 +529,91 @@ void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 
 }
 
-void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack)
+void AnswerLogin(int appID, sf::IpAddress ip, unsigned short port, sf::Packet pack)
 {
 	//Comprobar si el clientProxy con Ip dada ya se esta intentando logear
-	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
+	if (clientProxies[appID]->isLogging == false && clientProxies[appID]->isLogged == false)
 	{
-		if (it->second->ip == ip && it->second->port == port)
+		clientProxies[appID]->isLogging = true;
+
+		std::string username;
+		std::string password;
+
+		pack >> username >> password;
+
+		pack.clear();
+
+		//Procesado de info del login, consulta a la BBDD
+		sql::Driver* driver = sql::mysql::get_driver_instance();
+		sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+		conn->setSchema("slitherudp");
+
+		std::cout << "Voy a procesar los datos del cliente, usuario: " << username << ", password: " << password << std::endl;
+
+		sql::SQLString usernameBBDD = username.c_str();
+		sql::SQLString passwordBBDD = password.c_str();
+
+		sql::PreparedStatement* pstmt;
+		sql::ResultSet* res;
+
+		pstmt = conn->prepareStatement("SELECT id FROM Usuarios WHERE Username=? AND Pasword=?");
+		pstmt->setString(1, usernameBBDD);
+		pstmt->setString(2, passwordBBDD);
+		pstmt->execute();
+
+		int idUser = 0;
+		int errorCode = 0;
+
+		do
 		{
-			if (it->second->isLogging == false && it->second->isLogged == false)
+			res = pstmt->getResultSet();
+
+			while (res->next())
 			{
-				it->second->isLogging = true;
-
-				std::string username;
-				std::string password;
-
-				pack >> username >> password;
-
-				pack.clear();
-
-				//Procesado de info del login, consulta a la BBDD
-				sql::Driver* driver = sql::mysql::get_driver_instance();
-				sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
-				conn->setSchema("slitherudp");
-
-				std::cout << "Voy a procesar los datos del cliente, usuario: " << username << ", password: " << password << std::endl;
-
-				sql::SQLString usernameBBDD = username.c_str();
-				sql::SQLString passwordBBDD = password.c_str();
-
-				sql::PreparedStatement* pstmt;
-				sql::ResultSet* res;
-
-				pstmt = conn->prepareStatement("SELECT id FROM Usuarios WHERE Username=? AND Pasword=?");
-				pstmt->setString(1, usernameBBDD);
-				pstmt->setString(2, passwordBBDD);
-				pstmt->execute();
-
-				int idUser = 0;
-				int errorCode = 0;
-
-				do
-				{
-					res = pstmt->getResultSet();
-
-					while (res->next())
-					{
-						idUser = res->getInt(1);
-						std::cout << "Resultado de consultar el inicio de sesion: " << res->getInt(1) << std::endl;
-					}
-
-				} while (pstmt->getMoreResults());
-
-
-				if (idUser > 0)
-				{
-					//El cliente ha iniciado sesión
-					errorCode = 1;
-
-					it->second->queryId = idUser;
-					it->second->uState = UserState::LOBBY;
-					it->second->isLogged = true;
-					SetPlayerSesion(it->second->appId, idUser);
-
-					GetPlayeBBDDInfo(idUser);
-				}
-				else
-				{
-					errorCode = 0;
-				}
-
-
-				//Respuesta a cliente
-				pack << static_cast<int>(Protocol::LOGIN);
-				pack << errorCode;
-
-
-
-				if (sock.send(pack, ip, port) != sf::UdpSocket::Status::Done)
-					std::cout << "Error al responder al login." << std::endl;
-				else
-				{
-					std::cout << "Devuelto el mensaje de login a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
-					it->second->isLogging = false;
-				}
-
-
-				conn->close();
-
-
+				idUser = res->getInt(1);
+				std::cout << "Resultado de consultar el inicio de sesion: " << res->getInt(1) << std::endl;
 			}
-		}
-	}
 
+		} while (pstmt->getMoreResults());
+
+
+		if (idUser > 0)
+		{
+			//El cliente ha iniciado sesión
+			errorCode = 1;
+
+			clientProxies[appID]->queryId = idUser;
+			clientProxies[appID]->uState = UserState::LOBBY;
+			clientProxies[appID]->isLogged = true;
+			SetPlayerSesion(clientProxies[appID]->appId, idUser);
+
+			GetPlayeBBDDInfo(appID, idUser);
+		}
+		else
+		{
+			errorCode = 0;
+		}
+
+
+		//Respuesta a cliente
+		pack << static_cast<int>(Protocol::LOGIN);
+		pack << errorCode;
+
+
+
+		if (sock.send(pack, ip, port) != sf::UdpSocket::Status::Done)
+			std::cout << "Error al responder al login." << std::endl;
+		else
+		{
+			std::cout << "Devuelto el mensaje de login a ip: " << ip.toString() << ", con puerto: " << port << std::endl;
+			clientProxies[appID]->isLogging = false;
+		}
+
+
+		conn->close();
+
+
+	}
 }
 
 void SetPlayerSesion(int appIdPlayer, int idPlayer)
@@ -754,7 +756,7 @@ void UpdateSesion(int idPlayer)
 
 }
 
-void GetPlayeBBDDInfo(int idPlayer)
+void GetPlayeBBDDInfo(int playerAppID, int playerQueryID)
 {
 	/*Crear consultas a BBDD con id de player y sacar todos sus stats:
 
@@ -783,7 +785,7 @@ void GetPlayeBBDDInfo(int idPlayer)
 #pragma region Partidas_Ganadas
 
 	pstmt = conn->prepareStatement("SELECT count(*) FROM Partidas WHERE idGanador=?");
-	pstmt->setInt(1, idPlayer);
+	pstmt->setInt(1, playerQueryID);
 	pstmt->execute();
 
 	do
@@ -793,7 +795,7 @@ void GetPlayeBBDDInfo(int idPlayer)
 		while (res->next())
 		{
 			partidasGanadas = res->getInt(1);
-			std::cout << "Resultado de consultar el la cantidad de partidas ganadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
+			std::cout << "Resultado de consultar el la cantidad de partidas ganadas: " << res->getInt(1) << ", para el usuario con id: " << playerQueryID << std::endl;
 		}
 
 	} while (pstmt->getMoreResults());
@@ -803,7 +805,7 @@ void GetPlayeBBDDInfo(int idPlayer)
 #pragma region Partidas_Jugadas
 
 	pstmt = conn->prepareStatement("SELECT id FROM Partidas WHERE idUsuario=?");
-	pstmt->setInt(1, idPlayer);
+	pstmt->setInt(1, playerQueryID);
 	pstmt->execute();
 
 
@@ -841,7 +843,7 @@ void GetPlayeBBDDInfo(int idPlayer)
 			while (res->next())
 			{
 				auxId = res->getInt(1);
-				if (auxId != idPlayer)
+				if (auxId != playerQueryID)
 					partidasNoGanadas++;
 				//std::cout << "Resultado de consultar el la cantidad de partidas jugadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
 			}
@@ -856,7 +858,7 @@ void GetPlayeBBDDInfo(int idPlayer)
 	for (int i = 0; i < idPartidasJugadas.size(); i++)
 	{
 		pstmt = conn->prepareStatement("SELECT Kills FROM Partidas WHERE idUsuario=?");
-		pstmt->setInt(1, idPlayer);
+		pstmt->setInt(1, playerQueryID);
 		pstmt->execute();
 
 		do
@@ -887,7 +889,7 @@ void GetPlayeBBDDInfo(int idPlayer)
 
 	//3-LLamar a función de MMR
 
-	ComputeMMRFromPlayer(idPlayer, partidasGanadas, partidasJugadas, totalKills, partidasNoGanadas);
+	ComputeMMRFromPlayer(playerAppID, playerQueryID, partidasGanadas, partidasJugadas, totalKills, partidasNoGanadas);
 	//std::cout << "MMR value for this user === " << ((partidasGanadas / fmax(partidasJugadas, 1)) * 80) + ((totalKills / fmax(partidasNoGanadas, 1)) * 20) << std::endl;
 
 }
@@ -903,7 +905,7 @@ void UpdatePlayerBBDDInfo(int idPlayer)
 
 }
 
-void ComputeMMRFromPlayer(int idPlayer, int partidasGanadas, int partidasJugadas, int totalKills, int partidasNoGanadas)
+void ComputeMMRFromPlayer(int playerAppID, int playerQueryID, int partidasGanadas, int partidasJugadas, int totalKills, int partidasNoGanadas)
 {
 	/*Computar el MMR del usuario
 		MMR1=((NumVictorias/NumPartidasJugadas)*80)+(NumMuertesTotales*20);				+-5/+-10 para encontrar partida sería lo óptimo pero dada la escasez de jugadores para testear simplemente ordenarlos
@@ -914,11 +916,8 @@ void ComputeMMRFromPlayer(int idPlayer, int partidasGanadas, int partidasJugadas
 	//1-Calcular el MMR del usuario indicado
 	float mmr = ((partidasGanadas / fmax(partidasJugadas, 1)) * 80) + ((totalKills / fmax(partidasNoGanadas, 1)) * 20);
 	//2-Actualizar su valor de MMR en la clase ClientProxy
-	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
-	{
-		it->second->mmr = mmr;
-		std::cout << "Player with id: " << it->second->appId << ", has the next MMR: " << it->second->mmr << std::endl;
-	}
+	clientProxies[playerAppID]->mmr = mmr;
+	std::cout << "Player with id: " << playerAppID << ", has the next MMR: " << clientProxies[playerAppID]->mmr << std::endl;
 }
 
 void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
@@ -929,6 +928,7 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 	bool clientExists = false;
 	ClientProxy* newClient = nullptr;
 	//busquem per ip i port si el client ja existeix:
+	clientProxies_mtx.lock();
 	for (std::map<int, ClientProxy*>::iterator it = clientProxies.begin(); it != clientProxies.end(); ++it)
 	{
 		ClientProxy* client = it->second;
@@ -951,6 +951,8 @@ void NewPlayer(sf::IpAddress ip, unsigned short port, sf::Packet pack)
 		sf::Vector2f headPos(x, y);
 		newClient = new ClientProxy(id, alias, ip, port, headPos);
 	}
+
+	clientProxies_mtx.unlock();
 
 	if (newClient == nullptr)
 	{
@@ -1026,7 +1028,7 @@ void loginThreadFunction()
 			LoginRegisterPack lrp = loginQueue.front();
 
 			//Login
-			AnswerLogin(lrp.ip, lrp.port, lrp.pack);
+			AnswerLogin(lrp.appID, lrp.ip, lrp.port, lrp.pack);
 
 			loginQueue.pop();
 		}
@@ -1166,6 +1168,10 @@ void CreateGame(std::vector<int> &arr)
 
 	
 	games.push_back(new GameProxy(games.size(), arr));
+	
+	for (int i = 0; i < (int)games[(int)games.size() - 1]->idPlayersInGame.size(); i++)
+	{
+		clientProxies[games[(int)games.size() - 1]->idPlayersInGame[i]]->matchID = (int)games.size() - 1;
+	}
 	CreateGameBBDD(games.size()-1);
-
 }

@@ -22,6 +22,7 @@ public:
 	int idSesionActual;
 	int totalKills;
 	int maxLongitud;
+	int matchID;
 
 	sf::Vector2f accumMovement;
 

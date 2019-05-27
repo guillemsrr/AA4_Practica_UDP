@@ -508,7 +508,7 @@ void LoginUser()
 {
 	//Utilizar cabecera LOGIN con username y password.
 	sf::Packet packetLogin;
-	packetLogin << static_cast<int>(Protocol::LOGIN);
+	packetLogin << static_cast<int>(Protocol::LOGIN) << m_player->appId;
 	packetLogin << static_cast<int>(criticPackets.size()) << username << password;
 
 			//Enviar paquete a servidor cada x segundos, hasta que me diga ok
@@ -651,15 +651,14 @@ void ButtonFunctionality()
 
 void FindGameFunction()
 {
+	std::cout << "Asking for a game" << std::endl;
 	//Enviar al servidor que quiero buscar una partida
 	sf::Packet packFindGame;
 	packFindGame << static_cast<int>(Protocol::FINDGAME);
 	packFindGame << static_cast<int>(criticPackets.size()) << m_player->appId;
 	packFindGame << static_cast<int>(m_player->skinColor);
 
-
 	criticPackets[criticPackets.size()] = packFindGame;
-
 }
 
 void GraphicsInterface()

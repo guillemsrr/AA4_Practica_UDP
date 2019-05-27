@@ -17,6 +17,7 @@ ClientProxy::ClientProxy(int _id, std::string _alias, sf::IpAddress _ip, unsigne
 	idSesionActual = 0;
 	totalKills = 0;
 	maxLongitud = 0;
+	matchID = -1;
 }
 
 ClientProxy::~ClientProxy()

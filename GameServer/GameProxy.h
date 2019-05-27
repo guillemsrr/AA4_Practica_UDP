@@ -13,6 +13,8 @@ public:
 	~GameProxy();
 
 	int id;
+	//int queryIDGame;
+	std::vector<int> querysIDGame;
 	std::vector<int> idPlayersInGame;
 	std::vector<Food*> foodVector;
 	const int maxFood = 100;

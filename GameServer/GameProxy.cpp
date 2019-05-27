@@ -9,6 +9,7 @@ GameProxy::GameProxy()
 GameProxy::GameProxy(int _id, std::vector<int> _arr)
 {
 	id = _id;
+	//queryIDGame = 0;
 	idPlayersInGame = _arr;
 	InitializeFood();
 }
@@ -123,6 +124,7 @@ void GameProxy::PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientPr
 					std::cout << "collisioned" << std::endl;
 					kill = true;
 					//std::cout << "ID al morir: " << idPlayersInGame[i] << ", " << "ID player: " << idPlayer << std::endl;
+					clientProxies[idPlayer]->uState = UserState::LOBBY;
 					break;
 				}
 			}
@@ -166,6 +168,7 @@ void GameProxy::PlayerCollisionCheck(sf::UdpSocket &sock, std::map<int, ClientPr
 		{
 			sf::Packet pack2;
 			pack2 << Protocol::WIN;
+			clientProxies[idPlayersInGame[0]]->uState = UserState::LOBBY;
 			sock.send(pack2, clientProxies[idPlayersInGame[0]]->ip, clientProxies[idPlayersInGame[0]]->port);
 		}
 	}

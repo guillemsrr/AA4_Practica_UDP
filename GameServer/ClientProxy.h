@@ -19,6 +19,7 @@ public:
 	bool isLogged;
 	UserState uState;
 	float mmr;
+	int idSesionActual;
 
 	sf::Vector2f accumMovement;
 

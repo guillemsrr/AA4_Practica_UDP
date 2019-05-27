@@ -49,6 +49,9 @@ void MovementControlThread();
 void AnswerRegister(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void AnswerLogin(sf::IpAddress ip, unsigned short port, sf::Packet pack);
 void SetPlayerSesion(int idPlayer);
+void CreateGameBBDD(int idGame);
+void UpdateGameBBDD(int idGame, int idPlayer, int kills, int longitud, bool ganador);
+void UpdateSesion(int idPlayer);
 void GetPlayeBBDDInfo(int idPlayer);
 void UpdatePlayerBBDDInfo(int idPlayer);
 void ComputeMMRFromPlayer(int idPlayer, int partidasGanadas, int partidasJugadas, int totalKills, int partidasNoGanadas);
@@ -61,6 +64,7 @@ void registerThreadFunction();
 void MatchMakingFunction();
 void swap(int *xp, int *yp);
 void BubbleSort(std::vector<int> &arr);
+void BubbleSort2(std::vector<int> &arr);
 void CreateGame(std::vector<int> &arr);
 
 
@@ -310,6 +314,19 @@ void DisconnectionCheckerThreadFunction()
 					int idPack = (int)criticPackets.size();
 					pack << idPack;
 					pack << it->second->appId;
+					std::cout << "Desconectar al player con id: " << it->second->appId << std::endl;
+					//Borrar al jugador de la partida en la que esta y hacer ver que ha muerto
+					//for (int i = 0; i < games.size(); i++)
+					//{
+					//	for (int j = 0; j < games[i]->idPlayersInGame.size(); j++)
+					//	{
+					//		if (games[i]->idPlayersInGame[j] == it->second->appId)
+					//		{
+					//			//Hacer ver que este gusano ha muerto y borrarlo de la lista
+					//			games[i]->idPlayersInGame.erase(games[i]->idPlayersInGame.begin() + j);
+					//		}
+					//	}
+					//}
 
 					//Enviar DISCONNECTED
 					for (std::map<int, ClientProxy*>::iterator it2 = clientProxies.begin(); it2 != clientProxies.end(); ++it2)
@@ -613,7 +630,123 @@ void SetPlayerSesion(int idPlayer)
 	pstmt->setInt(3, 0);
 	pstmt->executeUpdate();
 
+	//Recoger y guardar el idSesion recien creado
+	pstmt = conn->prepareStatement("SELECT id FROM Sesion WHERE idUsuario=?");
+	pstmt->setInt(1, idPlayer);
+	pstmt->execute();
+
+	std::vector<int> sesionesUser;
+
+	do
+	{
+		res = pstmt->getResultSet();
+
+		while (res->next())
+		{
+			sesionesUser.push_back(res->getInt(1));
+			//std::cout << "Resultado de consultar el la cantidad de partidas ganadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
+		}
+
+	} while (pstmt->getMoreResults());
+
+	BubbleSort2(sesionesUser);
+	std::cout << "Ultima sesion del usuario tiene id: " << sesionesUser[sesionesUser.size() - 1] << std::endl;
+	clientProxies[idPlayer]->idSesionActual = sesionesUser[sesionesUser.size() - 1];
+
 	conn->close();
+
+}
+
+void CreateGameBBDD(int idGame)
+{
+	sql::Driver* driver = sql::mysql::get_driver_instance();
+	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+	conn->setSchema("slitherudp");
+
+	sql::PreparedStatement* pstmt;
+	sql::ResultSet* res;
+
+	for (int i = 0; i < games.size(); i++)
+	{
+		if (games[i]->id == idGame)
+		{
+			for (int j = 0; j < games[i]->idPlayersInGame.size(); j++)
+			{
+				//Insertar un nuevo registro de partida con esa idSesion y ese idUsuario
+				pstmt = conn->prepareStatement("INSERT INTO Partidas(idUsuario, idSesion, Kills, MaxLongitud, Inicio, Final, idGanador) VALUES(?, ?, ?, ?, CURRENT_TIME(), CURRENT_TIME(), ?)");
+				pstmt->setInt(1, clientProxies[games[i]->idPlayersInGame[j]]->queryId);
+				pstmt->setInt(2, clientProxies[games[i]->idPlayersInGame[j]]->idSesionActual);
+				pstmt->setInt(3, 0);
+				pstmt->setInt(4, 0);
+				pstmt->setInt(5, 0);
+				pstmt->executeUpdate();
+
+				//Guardar en la clase GaeProxy el queryIdGame
+				pstmt = conn->prepareStatement("SELECT id FROM Partidas WHERE idUsuario=?");
+				pstmt->setInt(1, games[i]->idPlayersInGame[0]);
+				pstmt->execute();
+
+				std::vector<int> idPartidas;
+
+				do
+				{
+					res = pstmt->getResultSet();
+
+					while (res->next())
+					{
+						idPartidas.push_back(res->getInt(1));
+						//std::cout << "Resultado de consultar el la cantidad de partidas ganadas: " << res->getInt(1) << ", para el usuario con id: " << idPlayer << std::endl;
+					}
+
+				} while (pstmt->getMoreResults());
+
+				BubbleSort2(idPartidas);
+				std::cout << "Ultima partida del usuario numero 0 tiene id: " << idPartidas[idPartidas.size() - 1] << std::endl;
+				//games[i]->queryIDGame = idPartidas[idPartidas.size() - 1];
+				games[i]->querysIDGame.push_back(idPartidas[idPartidas.size() - 1]);
+			}
+		}
+
+		
+
+	}
+
+	conn->close();
+}
+
+void UpdateGameBBDD(int idGame, int idPlayer, int kills, int longitud, bool ganador)
+{
+
+	sql::Driver* driver = sql::mysql::get_driver_instance();
+	sql::Connection* conn = driver->connect("tcp://www.db4free.net:3306", "slitheradmin", "123456789Admin");
+	conn->setSchema("slitherudp");
+
+	sql::PreparedStatement* pstmt;
+	sql::ResultSet* res;
+
+
+	for (int i = 0; i < games.size(); i++)
+	{
+		if (games[i]->id == idGame)
+		{
+			for (int j = 0; j < games[i]->idPlayersInGame.size(); j++)
+			{
+				if (games[i]->idPlayersInGame[j] == idPlayer)
+				{
+					pstmt = conn->prepareStatement("UPDATE Partidas SET Kills=?, MaxLongitud=? WHERE id=?");
+					pstmt->setInt(1, );
+					pstmt->setInt(2, );
+					pstmt->setInt(3, games[i]->querysIDGame[j]);
+				}
+			}
+		}
+	}
+
+	conn->close();
+}
+
+void UpdateSesion(int idPlayer)
+{
 
 }
 
@@ -929,10 +1062,11 @@ void MatchMakingFunction()
 			{
 				matchedPlayers.push_back(clientsSearchingForGame[clientsSearchingForGame.size()-1]);
 				clientsSearchingForGame.pop_back();
+				std::cout << "Matched  player, ID: " << matchedPlayers[i] << std::endl;
 			}
 			//Crear partida
 			CreateGame(matchedPlayers);
-			std::cout << "Matched  players. ID: " << matchedPlayers[0] << ", ID: " << matchedPlayers[1] << std::endl;
+			//std::cout << "Matched  players. ID: " << matchedPlayers[0] << ", ID: " << matchedPlayers[1] << std::endl;
 		}
 		else
 			std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * CRITICPACKETSTIMER)));
@@ -961,6 +1095,21 @@ void BubbleSort(std::vector<int> &arr)
 	}				
 }
 
+void BubbleSort2(std::vector<int> &arr)
+{
+	int i, j;
+	for (i = 0; i < arr.size() - 1; i++)
+	{
+		for (j = 0; j < arr.size() - i - 1; j++)
+		{
+			if (arr[j]> arr[j + 1])
+			{
+				swap(&arr[j], &arr[j + 1]);
+			}
+		}
+	}
+}
+
 void CreateGame(std::vector<int> &arr)
 {
 	//Pasar datos de todos los jugadores de la partida a todos los jugadores
@@ -970,6 +1119,7 @@ void CreateGame(std::vector<int> &arr)
 	for (int i = 0; i < arr.size(); i++)
 	{
 		clientProxies[arr[i]]->AddDataToPacket(&pack);
+		clientProxies[arr[i]]->uState = UserState::PLAY;
 	}
 
 	//Enviar el paquete a todos los jugadores

@@ -590,6 +590,12 @@ void ButtonFunctionality()
 		board.slithersMap.clear();
 		interpolationsMap.clear();
 		sceneStage = SceneStage::SKIN_SELECT;
+		sf::Packet packB;
+		packB << static_cast<int>(Protocol::EXITGAME);
+		packB << m_player->appId;
+
+		sock.send(packB, IP, PORT);
+
 	}
 	else if (lastPressedButtonID == btnRedID)
 	{

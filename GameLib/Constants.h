@@ -31,7 +31,8 @@ enum Protocol
 	UPDATEUSER,
 	FINDGAME,
 	STARTGAME,
-	WIN
+	WIN,
+	EXITGAME
 };
 
 //timers:

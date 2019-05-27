@@ -26,6 +26,11 @@ typedef struct {
 	sf::Packet pack;
 }LoginRegisterPack;
 
+typedef struct {
+	int appID;
+	int queryID;
+}UpdateMMRPack;
+
 std::mutex clientProxies_mtx;
 std::mutex gameProxies_mtx;
 
@@ -39,6 +44,7 @@ std::queue<LoginRegisterPack> loginQueue;
 std::queue<LoginRegisterPack> registerQueue;
 std::vector<int> clientsSearchingForGame;
 std::vector<GameProxy*> games;
+std::queue<UpdateMMRPack> mmrQueue;
 
 
 //declarations:
@@ -68,6 +74,7 @@ void swap(int *xp, int *yp);
 void BubbleSort(std::vector<int> &arr);
 void BubbleSort2(std::vector<int> &arr);
 void CreateGame(std::vector<int> &arr);
+void MmrUpdateThreadFunction();
 
 
 int main()
@@ -110,6 +117,10 @@ int main()
 	//Crear thread para administrar el matchmaking
 	std::thread matchmakingThread(&MatchMakingFunction);
 	matchmakingThread.detach();
+
+	//Crear thread para administrar el matchmaking
+	std::thread mmrUpdateThread(&MmrUpdateThreadFunction);
+	mmrUpdateThread.detach();
 
 
 	#pragma endregion
@@ -215,6 +226,18 @@ int main()
 					//Añadir el player a la matchmaking pool
 					clientsSearchingForGame.push_back(auxIDPlayer);
 
+					break;
+				case EXITGAME:
+					std::cout << "Recibo el aviso de que el cliente quiere volver al menu" << std::endl;
+					pack >> auxIDPlayer;
+
+					UpdateMMRPack ummrp;
+					ummrp.appID = auxIDPlayer;
+					ummrp.queryID = clientProxies[auxIDPlayer]->queryId;
+
+					mmrQueue.push(ummrp);
+
+					//GetPlayeBBDDInfo(auxIDPlayer, clientProxies[auxIDPlayer]->queryId);
 					break;
 				}
 			}
@@ -397,18 +420,18 @@ void MovementControlThread()
 
 	while (true)
 	{
-		gameProxies_mtx.lock();
+		//gameProxies_mtx.lock();
 		for (int i = 0; i < games.size(); i++)
 		{
 			for (int j=0; j<games[i]->idPlayersInGame.size(); j++)
 			{
 				if (abs(clientProxies[games[i]->idPlayersInGame[j]]->accumMovement.x) + abs(clientProxies[games[i]->idPlayersInGame[j]]->accumMovement.y) > 0)
 				{
-					games[i]->MovementControl(sock, clientProxies, clientProxies[games[i]->idPlayersInGame[j]]->appId, clientProxies[games[i]->idPlayersInGame[j]]->lastIdMove);
+					games[i]->MovementControl(sock, clientProxies, clientProxies[games[i]->idPlayersInGame[j]]->appId, clientProxies[games[i]->idPlayersInGame[j]]->lastIdMove); 
 				}
 			}
 		}
-		gameProxies_mtx.unlock();
+		//gameProxies_mtx.unlock();
 			
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)(MOVEMENTUPDATETIMER * 1000)));
 
@@ -1174,4 +1197,23 @@ void CreateGame(std::vector<int> &arr)
 		clientProxies[games[(int)games.size() - 1]->idPlayersInGame[i]]->matchID = (int)games.size() - 1;
 	}
 	CreateGameBBDD(games.size()-1);
+}
+
+void MmrUpdateThreadFunction()
+{
+	while (true)
+	{
+		if (mmrQueue.size() > 0)
+		{
+			UpdateMMRPack ummrp = mmrQueue.front();
+
+			//Updatear MMR
+			GetPlayeBBDDInfo(ummrp.appID, ummrp.queryID);
+
+
+			mmrQueue.pop();
+		}
+		else
+			std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * CRITICPACKETSTIMER)));
+	}
 }
